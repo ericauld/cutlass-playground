@@ -104,7 +104,7 @@ int h6() {
   return 0;
 }
 
-int main() {
+int h7() {
   using namespace cute;
   auto ref2trg = Layout<Shape<_1, _4>>{};
   using AtomNumThr = _1;
@@ -129,5 +129,22 @@ int main() {
   // ((trg_tid,rest_tid),(trg_val,rest_val)) -> (m,n)
 
   std::cout << "thrval2mn => " << thrval2mn << "\n";
+  return 0;
+}
+
+int main() {
+  using namespace cute;
+
+  auto t = make_layout(make_shape(Int<32>{}, Int<8>{}));
+  auto v = make_layout(make_shape(Int<4>{}, Int<1>{}));
+  auto x = raked_product(t, v);
+  using AccessType = cutlass::AlignedArray<float, 4>;
+  using Atom = Copy_Atom<UniversalCopy<AccessType>, float>;
+  auto copyA = make_tiled_copy(Atom{},
+                               Layout<Shape<_32,_8>>{}, // Thr layout 32x8 m-major
+                               Layout<Shape< _4,_1>>{});// Val layout  4x1 m-major
+//  std::cout << "copyA.get_layoutS_MN() => " << copyA.get_layoutS_MN() << "\n";
+//  std::cout << "copyA.get_layoutD_MN() => " << copyA.get_layoutD_MN() << "\n";
+//  std::cout << "raked_product(" << t << "," << v << ") = " << x << "\n";
   return 0;
 }
