@@ -1,4 +1,5 @@
 #include <cute/tensor.hpp>
+
 #include <iostream>
 
 int f()
@@ -135,16 +136,8 @@ int h7() {
 int main() {
   using namespace cute;
 
-  auto t = make_layout(make_shape(Int<32>{}, Int<8>{}));
-  auto v = make_layout(make_shape(Int<4>{}, Int<1>{}));
-  auto x = raked_product(t, v);
-  using AccessType = cutlass::AlignedArray<float, 4>;
-  using Atom = Copy_Atom<UniversalCopy<AccessType>, float>;
-  auto copyA = make_tiled_copy(Atom{},
-                               Layout<Shape<_32,_8>>{}, // Thr layout 32x8 m-major
-                               Layout<Shape< _4,_1>>{});// Val layout  4x1 m-major
-//  std::cout << "copyA.get_layoutS_MN() => " << copyA.get_layoutS_MN() << "\n";
-//  std::cout << "copyA.get_layoutD_MN() => " << copyA.get_layoutD_MN() << "\n";
-//  std::cout << "raked_product(" << t << "," << v << ") = " << x << "\n";
+  auto block_shape = make_shape(Int<128>{}, Int<64>{});
+  auto tensor_layout = make_layout(make_shape(Int<128>{}, 512));
+  print(tiled_divide(tensor_layout, block_shape));
   return 0;
 }
