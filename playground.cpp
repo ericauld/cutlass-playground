@@ -133,11 +133,20 @@ int h7() {
   return 0;
 }
 
-int main() {
+int h8() {
   using namespace cute;
 
   auto block_shape = make_shape(Int<128>{}, Int<64>{});
   auto tensor_layout = make_layout(make_shape(Int<128>{}, 512));
   print(tiled_divide(tensor_layout, block_shape));
+  return 0;
+}
+
+int main() {
+  using namespace cute;
+
+  using op = UniversalFMA<float, half_t, half_t>;
+  auto x = make_tiled_mma(op{}, Layout<Shape<_16, _16, _1>>{});
+  print(x);
   return 0;
 }
