@@ -25,7 +25,8 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
             TA const* A, AStride dA, ASmemLayout sA_layout, TiledCopyA copy_a,
             TB const* B, BStride dB, BSmemLayout sB_layout, TiledCopyB copy_b,
             TC      * C, CStride dC, CSmemLayout          , TiledMma mma,
-            Alpha alpha, Beta beta)
+            Alpha alpha, Beta beta,
+            int do_print = 0)
 {
   using namespace cute;
 
@@ -123,41 +124,75 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
 
   // Clear the accumulators
   clear(tCrC);
-
-#if 0
-  if(thread0()) {
-    print("  mA : "); print(  mA); print("\n");
-    print("  gA : "); print(  gA); print("\n");
-    print("  sA : "); print(  sA); print("\n");
-    print("tAgA : "); print(tAgA); print("\n");
-    print("tAsA : "); print(tAsA); print("\n");
-    print("tArA : "); print(tArA); print("\n");
+  if (do_print == 1) {
+    if(thread0()) {
+      print("  mA : "); print(  mA); print("\n");
+      print("  gA : "); print(  gA); print("\n");
+      print("  sA : "); print(  sA); print("\n");
+      print("tAgA : "); print(tAgA); print("\n");
+      print("tAsA : "); print(tAsA); print("\n");
+      print("tArA : "); print(tArA); print("\n");
+    }
+    if(thread0()) {
+      print("  mB : "); print(  mB); print("\n");
+      print("  gB : "); print(  gB); print("\n");
+      print("  sB : "); print(  sB); print("\n");
+      print("tBgB : "); print(tBgB); print("\n");
+      print("tBsB : "); print(tBsB); print("\n");
+      print("tBrB : "); print(tBrB); print("\n");
+    }
+    if(thread0()) {
+      print("  mC : "); print(  mC); print("\n");
+      print("  gC : "); print(  gC); print("\n");
+      print("tCsA : "); print(tCsA); print("\n");
+      print("tCsB : "); print(tCsB); print("\n");
+      print("tCgC : "); print(tCgC); print("\n");
+      print("tCrC : "); print(tCrC); print("\n");
+    }
   }
-#endif
-
-#if 0
-  if(thread0()) {
-    print("  mB : "); print(  mB); print("\n");
-    print("  gB : "); print(  gB); print("\n");
-    print("  sB : "); print(  sB); print("\n");
-    print("tBgB : "); print(tBgB); print("\n");
-    print("tBsB : "); print(tBsB); print("\n");
-    print("tArA : "); print(tArA); print("\n");
-  }
-#endif
-
-#if 0
-  if(thread0()) {
-    print("  mC : "); print(  mC); print("\n");
-    print("  gC : "); print(  gC); print("\n");
-    print("tCsA : "); print(tCsA); print("\n");
-    print("tCsB : "); print(tCsB); print("\n");
-    print("tCgC : "); print(tCgC); print("\n");
-    print("tCrC : "); print(tCrC); print("\n");
-  }
-#endif
-
 #if 1
+
+/*
+M = 5120
+N = 5120
+K = 4096
+
+  mA : (5120,4096): col
+
+  gA : (_128:_1, _8:5120, 512:40960)
+
+  sA : (_128,_8): col
+
+tAgA : ((_4,_1):(_1,_0), _1:_0, _1:_0, 512:40960)
+
+tAsA : ((_4,_1):(_1,_0), _1:_0, _1:_0)
+
+tArA : ((_4,_1):(_1,_0), _1:_0, _1:_0)
+
+  mB : (5120, 4096): col
+
+  gB : (_128:_1, _8:5120, 512:40960)
+
+  sB : (_128, _8): col
+
+tBgB : ((_4,_1):(_1,_0), _1:_0, _1:_0, 512:40960)
+
+tBsB : ((_4,_1):(_1,_0), _1:_0, _1:_0)
+
+tBrB : ((_4,_1):(_1,_0), _1:_0, _1:_0)
+
+  mC : (5120,5120) : col
+
+  gC : (_128,_128) : (_1, 5120)
+
+tCsA : (_1,_8,_8):(_0,_16,_128)
+
+tCsB : (_1,_8,_8):(_0,_16,_128)
+
+tCgC : (_1,_8,_8):(_0,_16,81920)
+
+tCrC : (_1,_8,_8):(_0,_1,_8)
+*/
 
   // TUTORIAL: Example of an inner loop that pipelines compute with reads
   //           from global memory by staging through register and shared memory.
@@ -221,7 +256,8 @@ gemm_nt(int m, int n, int k,
         TB const* B, int ldB,
         Beta beta,
         TC      * C, int ldC,
-        cudaStream_t stream = 0)
+        cudaStream_t stream = 0,
+        int do_print = 0)
 {
   using namespace cute;
 
@@ -289,7 +325,7 @@ gemm_nt(int m, int n, int k,
        A, dA, sA, copyA,
        B, dB, sB, copyB,
        C, dC, sC, mmaC,
-       alpha, beta);
+       alpha, beta, do_print);
 }
 
 int main(int argc, char** argv)
@@ -344,7 +380,7 @@ int main(int argc, char** argv)
           d_A.data().get(), ldA, 
           d_B.data().get(), ldB, 
           beta, 
-          d_C.data().get(), ldC, /*stream*/ 0);
+          d_C.data().get(), ldC, /*stream*/ 0, /*do_print*/ 1);
   CUTE_CHECK_LAST();
   thrust::host_vector<TC> cute_result = d_C;
 
