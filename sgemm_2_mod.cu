@@ -157,6 +157,39 @@ M = 5120
 N = 5120
 K = 4096
 
+TiledCopy
+  Tiler_MN:       (_128,_8)
+  TiledLayout_TV: (_256,_4):(_4,_1)
+
+Copy_Atom
+  ThrID:        _1:_0
+  ValLayoutSrc: (_1,_4):(_0,_1)
+  ValLayoutDst: (_1,_4):(_0,_1)
+  ValLayoutRef: (_1,_4):(_0,_1)
+  ValueType:    32b
+
+TiledCopy
+  Tiler_MN:       (_128,_8)
+  TiledLayout_TV: (_256,_4):(_4,_1)
+
+Copy_Atom
+  ThrID:        _1:_0
+  ValLayoutSrc: (_1,_4):(_0,_1)
+  ValLayoutDst: (_1,_4):(_0,_1)
+  ValLayoutRef: (_1,_4):(_0,_1)
+  ValueType:    32b
+
+TiledMMA
+  ThrLayoutVMNK:  (_1,_16,_16,_1):(_0,_1,_16,_0)
+  PermutationMNK: (_,_,_)
+
+MMA_Atom
+  ThrID:      _1:_0
+  Shape_MNK:  (_1,_1,_1)
+  LayoutA_TV: (_1,_1):(_0,_0)
+  LayoutB_TV: (_1,_1):(_0,_0)
+  LayoutC_TV: (_1,_1):(_0,_0)
+
   mA : (5120,4096): col
 
   gA : (_128:_1, _8:5120, 512:40960)
@@ -305,11 +338,11 @@ gemm_nt(int m, int n, int k,
   TiledMMA mmaC = make_tiled_mma(UniversalFMA<TC,TA,TB>{},
                                  Layout<Shape<_16,_16,_1>>{});  // 16x16x1 UniversalFMA
 
-#if 0
-  print(copyA);
-  print(copyB);
-  print(mmaC);
-#endif
+  if (do_print == 1) {
+    print(copyA);
+    print(copyB);
+    print(mmaC);
+  }
 
 #if 0
   print_latex(copyA);
