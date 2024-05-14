@@ -157,16 +157,17 @@ M = 5120
 N = 5120
 K = 4096
 
-TiledCopy
-  Tiler_MN:       (_128,_8)
-  TiledLayout_TV: (_256,_4):(_4,_1)
-Copy_Atom
+TiledCopy                               op    = UniversalCopy<uint128_t>
+  Tiler_MN:       (_128,_8)             copyA = make_tiled_copy(Copy_Atom<op, float>{},
+  TiledLayout_TV: (_256,_4):(_4,_1)                             Layout<Shape<_32,_8>>{},
+Copy_Atom                                                       Layout<Shape< _4,_1>>{})
   ThrID:        _1:_0
   ValLayoutSrc: (_1,_4):(_0,_1)
   ValLayoutDst: (_1,_4):(_0,_1)
   ValLayoutRef: (_1,_4):(_0,_1)
   ValueType:    32b
-TiledMMA
+TiledMMA                                op  = UniversalFMA<TC,TA,TB>
+                                        mma = make_tiled_mma(op, Layout<Shape<_16,_16,_1>>{}) 
   ThrLayoutVMNK:  (_1,_16,_16,_1):(_0,_1,_16,_0)
   PermutationMNK: (_,_,_)
 MMA_Atom
@@ -175,6 +176,7 @@ MMA_Atom
   LayoutA_TV: (_1,_1):(_0,_0)
   LayoutB_TV: (_1,_1):(_0,_0)
   LayoutC_TV: (_1,_1):(_0,_0)
+
 
   mA : (5120,4096):(_1,5120)
   gA : (_128,_8,512):(_1,5120,40960)              local_tile(mA, cta_tiler, cta_coord, Step<_1, X,_1>{})
