@@ -162,31 +162,27 @@ M = 5120
 N = 5120
 K = 4096
 
-M = 5120
-N = 5120
-K = 4096
+tAgA : (_4,_1,512):(_32,_0,40960)      local_partition(gA, tA, threadIdx.x)
+tAsA : (_4,_1):(_32,_0)                local_partition(sA, tA, threadIdx.x)
+tCsA : (_8,_8):(_16,_128)              local_partition(sA, tC, threadIdx.x, Step<_1, X>{})
 
-tAgA : (_4,_1,512):(_32,_0,40960)
-tAsA : (_4,_1):(_32,_0)
-tCsA : (_8,_8):(_16,_128)
+tBgB : (_4,_1,512):(_32,_0,40960)      local_partition(gB, tB, threadIdx.x)
+tBsB : (_4,_1):(_32,_0)                local_partition(sB, tB, threadIdx.x)
+tCsB : (_8,_8):(_16,_128)              local_partition(sB, tC, threadIdx.x, Step< X,_1>{})
 
-tBgB : (_4,_1,512):(_32,_0,40960)
-tBsB : (_4,_1):(_32,_0)
-tCsB : (_8,_8):(_16,_128)
-
-tCrC : (_8,_8):(_1,_8)
-tCgC : (_8,_8):(_16,81920)
+tCrC : (_8,_8):(_1,_8)                 make_tensor_like(tCgC)
+tCgC : (_8,_8):(_16,81920)             local_partition(gC, tC, threadIdx.x, Step<_1,_1>{})
 
   mA : (5120,4096):(_1,5120)
-  gA : (_128,_8,512):(_1,5120,40960)
+  gA : (_128,_8,512):(_1,5120,40960)   local_tile(mA, cta_tiler, cta_coord, Step<_1, X,_1>{})nu
   sA : (_128,_8):(_1,_128)
 
   mB : (5120,4096):(_1,5120)
-  gB : (_128,_8,512):(_1,5120,40960)
+  gB : (_128,_8,512):(_1,5120,40960)   local_tile(mB, cta_tiler, cta_coord, Step< X,_1,_1>{})
   sB : (_128,_8):(_1,_128)
 
   mC : (5120,5120):(_1,5120)
-  gC : (_128,_128):(_1,5120)
+  gC : (_128,_128):(_1,5120)           local_tile(mC, cta_tiler, cta_coord, Step<_1,_1, X>{})
 */
 
 #if 1

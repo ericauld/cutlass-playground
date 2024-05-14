@@ -177,28 +177,28 @@ MMA_Atom
   LayoutC_TV: (_1,_1):(_0,_0)
 
   mA : (5120,4096):(_1,5120)
-  gA : (_128,_8,512):(_1,5120,40960)
+  gA : (_128,_8,512):(_1,5120,40960)              local_tile(mA, cta_tiler, cta_coord, Step<_1, X,_1>{})
   sA : (_128,_8):(_1,_128)
 
-tAgA : ((_4,_1),_1,_1,512):((_1,_0),_0,_0,40960)
-tArA : ((_4,_1),_1,_1):((_1,_0),_0,_0)
-tAsA : ((_4,_1),_1,_1):((_1,_0),_0,_0)
-tCsA : (_1,_8,_8):(_0,_16,_128)
+tAgA : ((_4,_1),_1,_1,512):((_1,_0),_0,_0,40960)  thr_copy_a.partition_S(gA)
+tArA : ((_4,_1),_1,_1):((_1,_0),_0,_0)            make_fragment_like(tAsA)
+tAsA : ((_4,_1),_1,_1):((_1,_0),_0,_0)            thr_copy_a.partition_D(sA)
+tCsA : (_1,_8,_8):(_0,_16,_128)                   thr_mma.partition_A(sA)
 
-tBgB : ((_4,_1),_1,_1,512):((_1,_0),_0,_0,40960)
-tBrB : ((_4,_1),_1,_1):((_1,_0),_0,_0)
-tBsB : ((_4,_1),_1,_1):((_1,_0),_0,_0)
-tCsB : (_1,_8,_8):(_0,_16,_128)
+tBgB : ((_4,_1),_1,_1,512):((_1,_0),_0,_0,40960)  thr_copy_b.partition_S(gB)
+tBrB : ((_4,_1),_1,_1):((_1,_0),_0,_0)            make_fragment_like(tBsB)
+tBsB : ((_4,_1),_1,_1):((_1,_0),_0,_0)            thr_copy_b.partition_D(sB)
+tCsB : (_1,_8,_8):(_0,_16,_128)                   thr_mma.partition_B(sB)
 
-tCrC : (_1,_8,_8):(_0,_1,_8)
-tCgC : (_1,_8,_8):(_0,_16,81920)
+tCrC : (_1,_8,_8):(_0,_1,_8)                      thr_mma.make_fragment_C(tCgC)
+tCgC : (_1,_8,_8):(_0,_16,81920)                  thr_mma.partition_C(gC)
 
   mB : (5120,4096):(_1,5120)
-  gB : (_128,_8,512):(_1,5120,40960)
+  gB : (_128,_8,512):(_1,5120,40960)              local_tile(mB, cta_tiler, cta_coord, Step< X,_1,_1>{})
   sB : (_128,_8):(_1,_128)
 
   mC : (5120,5120):(_1,5120)
-  gC : (_128,_128):(_1,5120)
+  gC : (_128,_128):(_1,5120)                      local_tile(mC, cta_tiler, cta_coord, Step<_1,_1, X>{})
 */
 
   // TUTORIAL: Example of an inner loop that pipelines compute with reads
