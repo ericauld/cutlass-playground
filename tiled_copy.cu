@@ -125,9 +125,23 @@ __global__ void copy_kernel_vectorized(TensorS S, TensorD D, ThreadLayout, VecLa
   
   // #if 0
   if(thread0()) {
-    print("  tiled_copy : "); print(  tiled_copy); print("\n");
+    print(tiled_copy); print("\n");
   }
 // #endif
+
+/*
+TiledCopy
+  Tiler_MN:       (_128,_8)
+  TiledLayout_TV: (_256,_4):(_4,_1)
+Copy_Atom
+  ThrID:        _1:_0
+  ValLayoutSrc: (_1,_4):(_0,_1)
+  ValLayoutDst: (_1,_4):(_0,_1)
+  ValLayoutRef: (_1,_4):(_0,_1)
+  ValueType:    32b
+
+Success.
+*/
 
   // Construct a Tensor corresponding to each thread's slice.
   auto thr_copy = tiled_copy.get_thread_slice(threadIdx.x);
