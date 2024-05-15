@@ -177,6 +177,10 @@ MMA_Atom
   LayoutB_TV: (_1,_1):(_0,_0)
   LayoutC_TV: (_1,_1):(_0,_0)
 
+  bM = Int<128>{}
+  bN = Int<128>{}
+  bK = Int<  8>{}
+  cta_tiler = make_shape(bM, bN, bK)
 
   mA : (5120,4096):(_1,5120)
   gA : (_128,_8,512):(_1,5120,40960)              local_tile(mA, cta_tiler, cta_coord, Step<_1, X,_1>{})

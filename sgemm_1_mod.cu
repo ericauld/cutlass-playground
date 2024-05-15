@@ -162,6 +162,11 @@ M = 5120
 N = 5120
 K = 4096
 
+bM = Int<128>{}
+bN = Int<128>{}
+bK = Int<  8>{}
+cta_tiler = make_shape(bM, bN, bK)
+
 tAgA : (_4,_1,512):(_32,_0,40960)      local_partition(gA, tA, threadIdx.x)
 tAsA : (_4,_1):(_32,_0)                local_partition(sA, tA, threadIdx.x)
 tCsA : (_8,_8):(_16,_128)              local_partition(sA, tC, threadIdx.x, Step<_1, X>{})
