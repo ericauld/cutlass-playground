@@ -142,11 +142,34 @@ int h8() {
   return 0;
 }
 
-int main() {
+int h9() {
   using namespace cute;
 
   using op = UniversalFMA<float, half_t, half_t>;
   auto x = make_tiled_mma(op{}, Layout<Shape<_16, _16, _1>>{});
   print(x);
+  return 0;
+}
+
+int h10() {
+  using namespace cute;
+
+  auto sA = make_layout(Shape<_128, _8>{});
+  auto a_tile = make_tile(make_layout(_1{}), make_layout(_1{}));
+  auto a_tensor = zipped_divide(sA, a_tile);
+  print("zipped_divide((128:8, col), <1, 1>) => "); print(a_tensor); print("\n");
+  auto thr_tile = make_tile(_, make_tile(_16{}, _1{}));
+  auto thr_tensor = zipped_divide(a_tensor, thr_tile);
+  print("zipped_divide(that, <_, <16, 1>>): => "); print(thr_tensor); print("\n");
+  print("partition_A indexes into this in the first mode"); print("\n");
+  return 0;
+}
+
+int main() {
+  using namespace cute;
+
+  using uc_op = UniversalCopy<uint128_t>;
+  auto copyA = make_tiled_copy(Copy_Atom<uc_op, half_t>{}, Layout<Shape<_32,_8>>{}, Layout<Shape<_8,_1>>{});
+  print(copyA); print("\n");
   return 0;
 }
