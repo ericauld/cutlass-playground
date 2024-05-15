@@ -341,6 +341,18 @@ gemm_nt(int m, int n, int k,
   dim3 dimBlock(size(mmaC));
   dim3 dimGrid(size(ceil_div(M, bM)),
                size(ceil_div(N, bN)));
+  if (do_print == 1) {
+    print("dimBlock: => "); print(dimBlock); print("\n");
+    print("dimGrid: => "); print(dimGrid); print("\n");
+    print("prob_shape: => "); print(prob_shape); print("\n");
+    print("cta_tiler: => "); print(cta_tiler); print("\n");
+    print("dA: => "); print(dA); print("\n");
+    print("dB: => "); print(dB); print("\n");
+    print("dC: => "); print(dC); print("\n");
+    print("sA: => "); print(sA); print("\n");
+    print("sB: => "); print(sB); print("\n");
+    print("sC: => "); print(sC); print("\n");
+  }
   gemm_device<<<dimGrid, dimBlock, 0, stream>>>
       (prob_shape, cta_tiler,
        A, dA, sA, copyA,
