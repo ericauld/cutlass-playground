@@ -157,39 +157,6 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
   }
 // #endif
 
-/*
-M = 5120
-N = 5120
-K = 4096
-
-bM = Int<128>{}
-bN = Int<128>{}
-bK = Int<  8>{}
-cta_tiler = make_shape(bM, bN, bK)
-
-tAgA : (_4,_1,512):(_32,_0,40960)      local_partition(gA, tA, threadIdx.x)
-tAsA : (_4,_1):(_32,_0)                local_partition(sA, tA, threadIdx.x)
-tCsA : (_8,_8):(_16,_128)              local_partition(sA, tC, threadIdx.x, Step<_1, X>{})
-
-tBgB : (_4,_1,512):(_32,_0,40960)      local_partition(gB, tB, threadIdx.x)
-tBsB : (_4,_1):(_32,_0)                local_partition(sB, tB, threadIdx.x)
-tCsB : (_8,_8):(_16,_128)              local_partition(sB, tC, threadIdx.x, Step< X,_1>{})
-
-tCrC : (_8,_8):(_1,_8)                 make_tensor_like(tCgC)
-tCgC : (_8,_8):(_16,81920)             local_partition(gC, tC, threadIdx.x, Step<_1,_1>{})
-
-  mA : (5120,4096):(_1,5120)
-  gA : (_128,_8,512):(_1,5120,40960)   local_tile(mA, cta_tiler, cta_coord, Step<_1, X,_1>{})nu
-  sA : (_128,_8):(_1,_128)
-
-  mB : (5120,4096):(_1,5120)
-  gB : (_128,_8,512):(_1,5120,40960)   local_tile(mB, cta_tiler, cta_coord, Step< X,_1,_1>{})
-  sB : (_128,_8):(_1,_128)
-
-  mC : (5120,5120):(_1,5120)
-  gC : (_128,_128):(_1,5120)           local_tile(mC, cta_tiler, cta_coord, Step<_1,_1, X>{})
-*/
-
 #if 1
 
   // TUTORIAL: Example of a simple mainloop that read tiles of data into shared memory,
@@ -302,12 +269,32 @@ gemm_nt(int m, int n, int k,
        alpha, beta);
 }
 
+/*
+Using device 0: Tesla V100-SXM2-16GB  (SM70, 80 SMs)
+Hello, World!
+MMA_Atom
+  ThrID:      (_4,_2):(_1,_16)
+  Shape_MNK:  (_8,_8,_4)
+  LayoutA_TV: ((_4,_2),_4):((_8,_4),_1)
+  LayoutB_TV: ((_4,_2),_4):((_8,_4),_1)
+  LayoutC_TV: (_8,_8):(_1,_8)
+*/
+
+template <class TiledMma>
 __global__ static
 void
-f() {
+f(TiledMma mma,
+  int m, int n, int k) {
   using namespace cute;
 
   print("Hello, World!\n");
+  print(mma);
+
+  Int<128> bM;
+  Int<128> bN;
+  Int<8> bK;
+
+  
 }
 
 int main(int argc, char** argv)
@@ -337,11 +324,10 @@ int main(int argc, char** argv)
   thrust::device_vector<TC> d_C = h_C;
   dim3 dimBlock(1);
   dim3 dimGrid(1);
-  f<<<dimGrid, dimBlock, 0, 0>>>();
 
   using my_op = SM70_8x8x4_F16F16F16F16_NT;
   using atom = MMA_Atom<my_op>;
-  print(atom{});
+  f<<<dimGrid, dimBlock>>>(atom{}, m, n, k);
 
   CUTE_CHECK_LAST();
   return 0;
