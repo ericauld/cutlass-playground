@@ -367,24 +367,10 @@ int main(int argc, char** argv)
   }
 
   int m = 5120;
-  if (argc >= 2)
-    sscanf(argv[1], "%d", &m);
-
   int n = 5120;
-  if (argc >= 3)
-    sscanf(argv[2], "%d", &n);
-
   int k = 4096;
-  if (argc >= 4)
-    sscanf(argv[3], "%d", &k);
-
   char transA = 'N';
-  if (argc >= 5)
-    sscanf(argv[4], "%c", &transA);
-
   char transB = 'T';
-  if (argc >= 6)
-    sscanf(argv[5], "%c", &transB);
 
   using TA = float;
   using TB = float;
@@ -418,21 +404,8 @@ int main(int argc, char** argv)
 
   int ldA = 0, ldB = 0, ldC = m;
 
-  if (transA == 'N') {
-    ldA = m;
-  } else if (transA == 'T') {
-    ldA = k;
-  } else {
-    assert(false);
-  }
-
-  if (transB == 'N') {
-    ldB = k;
-  } else if (transB == 'T') {
-    ldB = n;
-  } else {
-    assert(false);
-  }
+  ldA = m;
+  ldB = n;
 
   // Run once
   d_C = h_C;
