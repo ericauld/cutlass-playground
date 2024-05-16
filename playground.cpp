@@ -165,11 +165,20 @@ int h10() {
   return 0;
 }
 
-int main() {
+int h11() {
   using namespace cute;
 
   using uc_op = UniversalCopy<uint128_t>;
   auto copyA = make_tiled_copy(Copy_Atom<uc_op, half_t>{}, Layout<Shape<_32,_8>>{}, Layout<Shape<_8,_1>>{});
   print(copyA); print("\n");
+  return 0;
+}
+
+int main() {
+  using namespace cute;
+
+  using my_op = SM70_8x8x4_F16F16F16F16_NT;
+  using atom = MMA_Atom<my_op>;
+  print(atom{});
   return 0;
 }
