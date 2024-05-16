@@ -1,5 +1,33 @@
-// Adapted from cutlass/examples/cute/tutorials/sgemm_sm70.cu
-
+/***************************************************************************************************
+ * Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ **************************************************************************************************/
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
@@ -25,7 +53,7 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
             TA const* A, AStride dA, ASmemLayout sA_layout, TiledCopyA copy_a,
             TB const* B, BStride dB, BSmemLayout sB_layout, TiledCopyB copy_b,
             TC      * C, CStride dC, CSmemLayout          , TiledMma mma,
-            Alpha alpha, Beta beta)
+            Alpha alpha, Beta beta, int do_print = 0)
 {
   using namespace cute;
 
@@ -127,7 +155,7 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
   // Clear the accumulators
   clear(tCrC);
 
-// #if 0
+  if (do_print == 1) {
   if(thread0()) {
     print("  mA : "); print(  mA); print("\n");
     print("  gA : "); print(  gA); print("\n");
@@ -136,20 +164,16 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
     print("tAsA : "); print(tAsA); print("\n");
     print("tArA : "); print(tArA); print("\n");
   }
-// #endif
 
-// #if 0
   if(thread0()) {
     print("  mB : "); print(  mB); print("\n");
     print("  gB : "); print(  gB); print("\n");
     print("  sB : "); print(  sB); print("\n");
     print("tBgB : "); print(tBgB); print("\n");
     print("tBsB : "); print(tBsB); print("\n");
-    print("tArA : "); print(tArA); print("\n");
+    print("tBrB : "); print(tBrB); print("\n");
   }
-// #endif
 
-// #if 0
   if(thread0()) {
     print("  mC : "); print(  mC); print("\n");
     print("  gC : "); print(  gC); print("\n");
@@ -158,7 +182,56 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
     print("tCgC : "); print(tCgC); print("\n");
     print("tCrC : "); print(tCrC); print("\n");
   }
-// #endif
+  }
+
+/*
+M = 5120
+N = 5120
+K = 4096
+
+TiledCopy
+  Tiler_MN:       (_128,_8)
+  TiledLayout_TV: (_256,_4):(_4,_1)
+Copy_Atom
+  ThrID:        _1:_0
+  ValLayoutSrc: (_1,_4):(_0,_1)
+  ValLayoutDst: (_1,_4):(_0,_1)
+  ValLayoutRef: (_1,_4):(_0,_1)
+  ValueType:    32b
+TiledMMA
+  ThrLayoutVMNK:  (_1,_16,_16,_1):(_0,_1,_16,_0)
+  PermutationMNK: (_,_,_)
+MMA_Atom
+  ThrID:      _1:_0
+  Shape_MNK:  (_1,_1,_1)
+  LayoutA_TV: (_1,_1):(_0,_0)
+  LayoutB_TV: (_1,_1):(_0,_0)
+  LayoutC_TV: (_1,_1):(_0,_0)
+
+  mA : (5120,4096):col
+  gA : (_128,_8,512):(_1,5120,40960)
+  sA : (_128,_8):col
+
+  mB : (5120,4096):(_1,5120)
+  gB : (_128,_8,512):(_1,5120,40960)
+  sB : (_128,_8):(_1,_128)
+
+  mC : (5120,5120):(_1,5120)
+  gC : (_128,_128):(_1,5120)
+
+tAgA : ((_4,_1),_1,_1,512):((_1,_0),_0,_0,40960)
+tArA : ((_4,_1),_1,_1):((_1,_0),_0,_0)
+tAsA : ((_4,_1),_1,_1):((_1,_0),_0,_0)
+tCsA : (_1,_8,_8):(_0,_16,_128)
+
+tBgB : ((_4,_1),_1,_1,512):((_1,_0),_0,_0,40960)
+tBrB : ((_4,_1),_1,_1):((_1,_0),_0,_0)
+tBsB : ((_4,_1),_1,_1):((_1,_0),_0,_0)
+tCsB : (_1,_8,_8):(_0,_16,_128)
+
+tCgC : (_1,_8,_8):(_0,_16,81920)
+tCrC : (_1,_8,_8):(_0,_1,_8)
+*/
 
 #if 1
 
@@ -232,7 +305,7 @@ gemm_nt(int m, int n, int k,
         TB const* B, int ldB,
         Beta beta,
         TC      * C, int ldC,
-        cudaStream_t stream = 0)
+        cudaStream_t stream = 0, int do_print = 0)
 {
   using namespace cute;
 
@@ -261,17 +334,18 @@ gemm_nt(int m, int n, int k,
   // Define the thread layouts (static)
   TiledCopy copyA = make_tiled_copy(Copy_Atom<UniversalCopy<uint128_t>, TA>{},
                                     Layout<Shape<_32,_8>>{},  // Thr layout 32x8 m-major
-                                    Layout<Shape< _8,_1>>{}); // Val layout  4x1 m-major
+                                    Layout<Shape< _4,_1>>{}); // Val layout  4x1 m-major
   TiledCopy copyB = make_tiled_copy(Copy_Atom<UniversalCopy<uint128_t>, TB>{},
                                     Layout<Shape<_32,_8>>{},  // Thr layout 32x8 n-major
-                                    Layout<Shape< _8,_1>>{}); // Val layout  4x1 n-major
+                                    Layout<Shape< _4,_1>>{}); // Val layout  4x1 n-major
 
   TiledMMA mmaC = make_tiled_mma(UniversalFMA<TC,TA,TB>{},
                                  Layout<Shape<_16,_16,_1>>{});  // 16x16x1 TiledMMA
 
+  if (do_print == 1) {
   print(copyA);
-  print(copyB);
   print(mmaC);
+  }
 
 #if 0
   print_latex(copyA);
@@ -282,14 +356,12 @@ gemm_nt(int m, int n, int k,
   dim3 dimBlock(size(mmaC));
   dim3 dimGrid(size(ceil_div(M, bM)),
                size(ceil_div(N, bN)));
-  print(dimBlock); print("\n");
-  print(dimGrid);  print("\n");
   gemm_device<<<dimGrid, dimBlock, 0, stream>>>
       (prob_shape, cta_tiler,
        A, dA, sA, copyA,
        B, dB, sB, copyB,
        C, dC, sC, mmaC,
-       alpha, beta);
+       alpha, beta, do_print);
 }
 
 template <class TA, class TB, class TC,
@@ -304,14 +376,11 @@ gemm(char transA, char transB, int m, int n, int k,
      cudaStream_t stream = 0)
 {
   return gemm_nt(m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
-  assert(false && "Not implemented");
 }
 
 
 int main(int argc, char** argv)
 {
-  using namespace cute;
-
   cudaDeviceProp props;
   cudaError_t error = cudaGetDeviceProperties(&props, 0);
   if (error != cudaSuccess) {
@@ -345,8 +414,8 @@ int main(int argc, char** argv)
   if (argc >= 6)
     sscanf(argv[5], "%c", &transB);
 
-  using TA = half_t;
-  using TB = half_t;
+  using TA = float;
+  using TB = float;
   using TC = float;
   using TI = float;
 
@@ -370,23 +439,53 @@ int main(int argc, char** argv)
   thrust::device_vector<TB> d_B = h_B;
   thrust::device_vector<TC> d_C = h_C;
 
+  double gflops = (2.0*m*n*k) * 1e-9;
+
+  const int timing_iterations = 100;
+  GPU_Clock timer;
+
   int ldA = 0, ldB = 0, ldC = m;
 
-  ldA = m;
-  ldB = n;
-  
+  if (transA == 'N') {
+    ldA = m;
+  } else if (transA == 'T') {
+    ldA = k;
+  } else {
+    assert(false);
+  }
+
+  if (transB == 'N') {
+    ldB = k;
+  } else if (transB == 'T') {
+    ldB = n;
+  } else {
+    assert(false);
+  }
+
   // Run once
   d_C = h_C;
-  gemm(transA, transB, m, n, k,
+  gemm_nt(m, n, k,
        alpha,
        d_A.data().get(), ldA,
        d_B.data().get(), ldB,
        beta,
-       d_C.data().get(), ldC);
+       d_C.data().get(), ldC, /*stream*/0, /*do_print*/1);
   CUTE_CHECK_LAST();
   thrust::host_vector<TC> cute_result = d_C;
 
+  // Timing iterations
+  timer.start();
+  for (int i = 0; i < timing_iterations; ++i) {
+  gemm_nt(m, n, k,
+       alpha,
+       d_A.data().get(), ldA,
+       d_B.data().get(), ldB,
+       beta,
+       d_C.data().get(), ldC, /*stream*/0, /*do_print*/0);
+  }
+  double cute_time = timer.seconds() / timing_iterations;
   CUTE_CHECK_LAST();
+  printf("CUTE_GEMM:     [%6.1f]GFlop/s  (%6.4f)ms\n", gflops / cute_time, cute_time*1000);
 
   return 0;
 }
