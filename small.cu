@@ -272,6 +272,9 @@ gemm_nt(int m, int n, int k,
 /*
 Using device 0: Tesla V100-SXM2-16GB  (SM70, 80 SMs)
 Hello, World!
+TiledMMA
+  ThrLayoutVMNK:  ((_4,_2),_1,_1,_1):((_1,_16),_0,_0,_0)
+  PermutationMNK: (_,_,_)
 MMA_Atom
   ThrID:      (_4,_2):(_1,_16)
   Shape_MNK:  (_8,_8,_4)
@@ -284,17 +287,19 @@ template <class TiledMma>
 __global__ static
 void
 f(TiledMma mma,
-  int m, int n, int k) {
+  int m, int n, int k,
+  cute::half_t const *A, cute::half_t const *B, cute::half_t *C,
+  cute::Int<128> bM, cute::Int<128> bN, cute::Int<8> bK) {
   using namespace cute;
+
+  Tensor mA = make_tensor(make_gmem_ptr(A), make_shape(m, k), make_stride(1, m));
+  Tensor mB = make_tensor(make_gmem_ptr(B), make_shape(n, k), make_stride(1, n));
+  Tensor mC = make_tensor(make_gmem_ptr(C), make_shape(m, n), make_stride(1, m));
+
+  
 
   print("Hello, World!\n");
   print(mma);
-
-  Int<128> bM;
-  Int<128> bN;
-  Int<8> bK;
-
-  
 }
 
 int main(int argc, char** argv)
@@ -322,12 +327,26 @@ int main(int argc, char** argv)
   thrust::device_vector<TA> d_A = h_A;
   thrust::device_vector<TB> d_B = h_B;
   thrust::device_vector<TC> d_C = h_C;
-  dim3 dimBlock(1);
-  dim3 dimGrid(1);
 
   using my_op = SM70_8x8x4_F16F16F16F16_NT;
   using atom = MMA_Atom<my_op>;
-  f<<<dimGrid, dimBlock>>>(atom{}, m, n, k);
+
+  auto mma = make_tiled_mma(atom{});
+
+  Int<128> bM {};
+  Int<128> bN {};
+  Int<8> bK {};
+
+  dim3 dimBlock(1);
+  dim3 dimGrid(1);
+
+  f<<<dimGrid, dimBlock>>>(
+     mma, 
+     m,  n,  k,
+     d_A.data().get(),
+     d_B.data().get(),
+     d_C.data().get(),
+     bM, bN, bK);
 
   CUTE_CHECK_LAST();
   return 0;
