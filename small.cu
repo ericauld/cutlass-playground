@@ -296,6 +296,13 @@ f(TiledMma mma,
   Tensor mB = make_tensor(make_gmem_ptr(B), make_shape(n, k), make_stride(1, n));
   Tensor mC = make_tensor(make_gmem_ptr(C), make_shape(m, n), make_stride(1, m));
 
+  Tensor gA = 
+  Tensor gB =
+  Tensor gC =
+
+  Tensor sA =
+  Tensor sB =
+
   
 
   print("Hello, World!\n");
