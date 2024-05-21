@@ -14,8 +14,11 @@
 __global__ static
 void
 gemm_kernel(cute::half_t const *d_q,
-            cute::half_t const *d_K) {
+            cute::half_t const *d_K,
+            cute::half_t *d_S) {
   using namespace cute;
+
+  for (int j = 0; j < 256; ++j) d_S[j] = 1; 
 
   return;
 }
@@ -31,18 +34,23 @@ int main() {
   cute::device_init(0);
 
   thrust::host_vector<TA> h_q(d);
-  thrust::host_vector<TA> h_K(n*d);
+  thrust::host_vector<TA> h_Kt(d*n);
+  thrust::host_vector<TA> h_S(n);
 
   for (int j = 0; j < d; ++j) h_q[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
-  for (int j = 0; j < n*d; ++j) h_K[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
+  for (int j = 0; j < d*n; ++j) h_Kt[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
+  for (int j = 0; j < n; ++j) h_S[j] = 0;
 
   thrust::device_vector<TA> d_q = h_q;
-  thrust::device_vector<TA> d_K = h_K;
+  thrust::device_vector<TA> d_Kt = h_Kt;
+  thrust::device_vector<TA> d_S = h_S;
 
   dim3 dimBlock(1);
   dim3 dimGrid(1);
 
-  gemm_kernel<<<dimGrid, dimBlock>>>(d_q.data().get(), d_K.data().get());
+  gemm_kernel<<<dimGrid, dimBlock>>>(d_q.data().get(), d_Kt.data().get(), d_S.data().get());
 
+  h_S = d_S;
+  assert(h_S[0] == 1);
   return 0;
 }
