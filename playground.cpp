@@ -174,11 +174,35 @@ int h11() {
   return 0;
 }
 
-int main() {
+int h12() {
   using namespace cute;
 
   using my_op = SM70_8x8x4_F16F16F16F16_NT;
   using atom = MMA_Atom<my_op>;
   print(atom{});
+  return 0;
+}
+
+int h13() {
+  using namespace cute;
+
+  auto l1 = make_layout(make_shape(_4{}, _2{}, _1{}), make_stride(_1{}, _16{}, _0{}));
+  auto l2 = make_shape(_1{}, _1{}, _4{});
+  auto l3 = logical_product(l1, l2);
+  print(l3); print("\n");
+  return 0;
+}
+
+int main() {
+  using namespace cute;
+
+  using my_op = SM70_8x8x4_F16F16F16F16_NT;
+  using atom = MMA_Atom<my_op>;
+  auto my_mma = make_tiled_mma(op{}, make_layout(make_shape(_1{}, _1{}, _4{})));
+
+  auto l1 = make_layout(make_shape(_4{}, _2{}, _1{}), make_stride(_1{}, _16{}, _0{}));
+  auto l2 = make_shape(_1{}, _1{}, _4{});
+  auto l3 = logical_product(l1, l2);
+  print(l3); print("\n");
   return 0;
 }

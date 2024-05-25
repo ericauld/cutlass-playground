@@ -195,6 +195,9 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
 
   for (int k_tile = 0; k_tile < K_TILE_MAX; ++k_tile)
   {
+    // EA: Where is this copy overload? Just two tensors. Oh, appears to be in
+    // cute/algorithm/copy.hpp.
+
     // Copy gmem to smem with tA|tB thread-partitioned tensors
     copy(tAgA(_,_,k_tile), tAsA);      // A   (THR_M,THR_K) -> (THR_M,THR_K)
     copy(tBgB(_,_,k_tile), tBsB);      // B   (THR_N,THR_K) -> (THR_N,THR_K)
