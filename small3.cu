@@ -91,6 +91,7 @@ int main() {
 
   thrust::device_vector<TA> d_A = h_A;
   thrust::device_vector<TA> d_B = h_B;
+  // Why am I copying a bunch of zeros from host to device?
   thrust::device_vector<TA> d_C = h_C;
 
   using op = SM70_8x8x4_F16F16F16F16_NT;
