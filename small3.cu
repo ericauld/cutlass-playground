@@ -11,18 +11,6 @@
 #include "cutlass/util/GPU_Clock.hpp"
 #include "cutlass/util/helper_cuda.hpp"
 
-// # define K
-// # define bN
-// # define M
-
-/*
-I'd like to follow a tiled mma w blayout (1, 1, 4: whatever) and see how the
-code takes care of adding the terms that wind up in the D registers.
-
-I'd like to pay closer attention to which of the cutlass examples use tiled
-mma's that operate on rmem and which on smem, and ask why.
-*/
-
 template <class TiledMma>
 __global__ static
 void
@@ -32,19 +20,30 @@ f(cute::half_t const *A,
   TiledMma            my_mma) {
   using namespace cute;
 
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_shape(8, 16));
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_shape(8, 16));
-  Tensor mC = make_tensor(make_gmem_ptr(C), make_shape(8, 8)); 
+  Tensor mA = make_tensor(make_gmem_ptr(A), make_shape(_8{}, _16{}));
+  Tensor mB = make_tensor(make_gmem_ptr(B), make_shape(_8{}, _16{}));
+  Tensor mC = make_tensor(make_gmem_ptr(C), make_shape(_8{}, _8{})); 
+
+  // There is no distinction between mC and gC here because there's only one
+  // block
 
   __shared__ half_t smemA[8*16];
   __shared__ half_t smemB[8*16];
-  Tensor sA = make_tensor(make_smem_ptr(smemA), make_shape(8, 16));
-  Tensor sB = make_tensor(make_smem_ptr(smemB), make_shape(8, 16));
+  Tensor sA = make_tensor(make_smem_ptr(smemA), make_shape(_8{}, _16{}));
+  Tensor sB = make_tensor(make_smem_ptr(smemB), make_shape(_8{}, _16{}));
   
   copy(mA, sA);
   copy(mB, sB);
   
-#if 1
+  auto thrmma = my_mma.get_slice(threadIdx.x);
+
+  auto rC = thrmma.partition_fragment_C(mC);
+  auto rA = thrmma.partition_fragment_A(sA);
+  auto rB = thrmma.partition_fragment_B(sB);
+
+  auto tCmC = thrmma.partition_C(mC);
+
+#if 0
   if(thread0()) {
     print("my_mma: "); print(my_mma); print("\n");
     print("sA: "); print(sA); print("\n");
@@ -52,10 +51,25 @@ f(cute::half_t const *A,
   }
 #endif
 
-#if 0
-  gemm(my_mma, sA, sB, rC);
+#if 1
+  gemm(my_mma, rA, rB, rC);
+  copy(rC, tCmC);
 #endif
 
+}
+
+void cpu_matmul(const cute::half_t *A, const cute::half_t *B, cute::half_t *C, int M, int N, int K) {
+  for (int i = 0; i < M; ++i) {
+    for (int j = 0; j < N; ++j) {
+      float sum = 0;
+      for (int k = 0; k < K; ++k) {
+        float a = A[i*K + k];
+        float b = B[k*N + j];
+        sum += a * b;
+      }
+      C[i*N + j] = sum;
+    }
+  }
 }
 
 int main() {
@@ -85,6 +99,16 @@ int main() {
   dim3 dimGrid(1);
   dim3 dimBlock(32);
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
+
+  thrust::host_vector<TA> h_C2 = d_C;
+
+  cpu_matmul(h_A.data(), h_B.data(), h_C.data(), M, N, K);
+
+  for (int i = 0; i < M; ++i) {
+    for (int j = 0; j < N; ++j) {
+      assert(h_C[i*N + j] == h_C2[i*N + j]);
+    }
+  }
 
   return 0;
 }

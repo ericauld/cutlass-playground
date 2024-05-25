@@ -174,7 +174,7 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
   }
 #endif
 
-#if 0
+#if 1
   if(thread0()) {
     print("  mC : "); print(  mC); print("\n");
     print("  gC : "); print(  gC); print("\n");
@@ -185,7 +185,7 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
   }
 #endif
 
-#if 1
+#if 0
 
   // TUTORIAL: Example of an inner loop that pipelines compute with reads
   //           from global memory by staging through register and shared memory.
