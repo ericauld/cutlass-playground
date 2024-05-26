@@ -20,17 +20,17 @@ f(cute::half_t const *A,
   TiledMma            my_mma) {
   using namespace cute;
 
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_shape(_8{}, _16{}));
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_shape(_8{}, _16{}));
-  Tensor mC = make_tensor(make_gmem_ptr(C), make_shape(_8{}, _8{})); 
+  Tensor mA = make_tensor(make_gmem_ptr(A), make_shape(_16{}, _8{}));
+  Tensor mB = make_tensor(make_gmem_ptr(B), make_shape(_8{}, _8{}));
+  Tensor mC = make_tensor(make_gmem_ptr(C), make_shape(_16{}, _8{})); 
 
   // There is no distinction between mC and gC here because there's only one
   // block
 
   __shared__ half_t smemA[8*16];
-  __shared__ half_t smemB[8*16];
-  Tensor sA = make_tensor(make_smem_ptr(smemA), make_shape(_8{}, _16{}));
-  Tensor sB = make_tensor(make_smem_ptr(smemB), make_shape(_8{}, _16{}));
+  __shared__ half_t smemB[8*8];
+  Tensor sA = make_tensor(make_smem_ptr(smemA), make_shape(_16{}, _8{}));
+  Tensor sB = make_tensor(make_smem_ptr(smemB), make_shape(_8{}, _8{}));
   
   copy(mA, sA);
   copy(mB, sB);
@@ -40,8 +40,6 @@ f(cute::half_t const *A,
   auto rC = thrmma.partition_fragment_C(mC);
   auto rA = thrmma.partition_fragment_A(sA);
   auto rB = thrmma.partition_fragment_B(sB);
-
-  auto tCmC = thrmma.partition_C(mC);
 
 #if 0
   if(thread0()) {
@@ -53,6 +51,8 @@ f(cute::half_t const *A,
 
 #if 1
   gemm(my_mma, rA, rB, rC);
+
+  auto tCmC = thrmma.partition_C(mC);
   copy(rC, tCmC);
 #endif
 
@@ -75,9 +75,9 @@ void cpu_matmul(const cute::half_t *A, const cute::half_t *B, cute::half_t *C, i
 int main() {
   using namespace cute;
 
-  int M = 8;
+  int M = 16;
   int N = 8;
-  int K = 16;
+  int K = 8;
 
   using TA = half_t;
 
@@ -94,8 +94,8 @@ int main() {
   // Why am I copying a bunch of zeros from host to device?
   thrust::device_vector<TA> d_C = h_C;
 
-  using op = SM70_8x8x4_F16F16F16F16_NT;
-  auto tiled_mma = make_tiled_mma(op{}, make_layout(make_shape(_1{}, _1{}, _4{}))); 
+  using op = SM80_16x8x8_F16F16F16F16_TN;
+  auto tiled_mma = make_tiled_mma(op{}, make_layout(make_shape(_1{}, _1{}, _1{}))); 
 
   dim3 dimGrid(1);
   dim3 dimBlock(32);
