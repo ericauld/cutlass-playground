@@ -21,6 +21,7 @@ f(cute::half_t const *A,
   using namespace cute;
 
   Tensor mA = make_tensor(make_gmem_ptr(A), make_shape(_16{}, _8{}));
+  // EA: Shouldn't I make mA row-major?
   Tensor mB = make_tensor(make_gmem_ptr(B), make_shape(_8{}, _8{}));
   Tensor mC = make_tensor(make_gmem_ptr(C), make_shape(_16{}, _8{})); 
 
@@ -38,6 +39,15 @@ f(cute::half_t const *A,
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
   auto rC = thrmma.partition_fragment_C(mC);
+  // EA: Shouldn't there be a synchronization before the next line? Different
+  // threads are touchine who-knows-which entries of sA and sB in `copy`, then
+  // looking at their mma-relevant values in `partition_fragment_A` and
+  // `partition_fragment_B`.
+
+  // EA: You should probably follow the lead of e.g. sgemm_1.cu and move the
+  // copy to down to the lowest possible level. Note that there's nothing wrong
+  // with making the fragment before the data is copied
+  __syncthreads();
   auto rA = thrmma.partition_fragment_A(sA);
   auto rB = thrmma.partition_fragment_B(sB);
 
@@ -59,6 +69,7 @@ f(cute::half_t const *A,
 }
 
 void cpu_matmul(const cute::half_t *A, const cute::half_t *B, cute::half_t *C, int M, int N, int K) {
+  // EA: Shouldn't I do this such that A is row-major?
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
       float sum = 0;
