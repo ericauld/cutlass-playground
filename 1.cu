@@ -45,8 +45,9 @@ f(cute::half_t const *A,
   // `partition_fragment_B`.
 
   // EA: You should probably follow the lead of e.g. sgemm_1.cu and move the
-  // copy to down to the lowest possible level. Note that there's nothing wrong
-  // with making the fragment before the data is copied
+  // copy down, so the sync-relevant stuff as close together as possible. Note
+  // that there's nothing wrong with making the fragment before the data is
+  // copied
   __syncthreads();
   auto rA = thrmma.partition_fragment_A(sA);
   auto rB = thrmma.partition_fragment_B(sB);
