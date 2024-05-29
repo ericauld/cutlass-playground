@@ -16,3 +16,6 @@ rm "$OBJECT_FILE"
 
 # linkLibs.rsp is:
 #  -Wl,-rpath,'$ORIGIN' -Wl,-rpath,'$ORIGIN/../lib64' -Wl,-rpath,'$ORIGIN/../lib' -Wl,-rpath,'/usr/local/cuda/lib64' -Wl,-rpath,'/usr/local/cuda/lib' -lcuda -lcudadevrt -lcudart
+
+# includes_CUDA.rsp is:
+# -I/teamspace/studios/this_studio/a/cutlass/include -I/teamspace/studios/this_studio/a/cutlass/examples/common -I/teamspace/studios/this_studio/a/cutlass/build/include -I/include -I/examples -I/teamspace/studios/this_studio/a/cutlass/tools/util/include -isystem /usr/local/cuda/include
