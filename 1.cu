@@ -39,6 +39,8 @@ f(cute::half_t const *A,
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
   auto rC = thrmma.partition_fragment_C(mC);
+  // EA: I should probably clear these accumulators, yes?
+
   // EA: Shouldn't there be a synchronization before the next line? Different
   // threads are touchine who-knows-which entries of sA and sB in `copy`, then
   // looking at their mma-relevant values in `partition_fragment_A` and
