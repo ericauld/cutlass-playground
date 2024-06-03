@@ -53,37 +53,11 @@ f(cute::half_t const *A,
   __syncthreads();
   auto rA = thrmma.partition_fragment_A(sA);
   auto rB = thrmma.partition_fragment_B(sB);
-
   auto tCmC = thrmma.partition_C(mC);
 
-#if 0
-  if(thread0()) {
-    print("my_mma: "); print(my_mma); print("\n");
-    print("sA: "); print(sA); print("\n");
-    print("my_mma.thrfrg_A(sA) : "); print(my_mma.thrfrg_A(sA)); print("\n");
-  }
-#endif
-
-#if 1
   gemm(my_mma, rA, rB, rC);
   copy(rC, tCmC);
-#endif
-
-}
-
-void cpu_matmul(const cute::half_t *A, const cute::half_t *B, cute::half_t *C, int M, int N, int K) {
-  // EA: Shouldn't I do this such that A is row-major?
-  for (int i = 0; i < M; ++i) {
-    for (int j = 0; j < N; ++j) {
-      float sum = 0;
-      for (int k = 0; k < K; ++k) {
-        float a = A[i*K + k];
-        float b = B[k*N + j];
-        sum += a * b;
-      }
-      C[i*N + j] = sum;
-    }
-  }
+  return;
 }
 
 int main() {
