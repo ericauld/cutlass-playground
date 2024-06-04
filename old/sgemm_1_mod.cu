@@ -1,6 +1,33 @@
-/*
-Adapted from https://github.com/NVIDIA/cutlass/blob/main/examples/cute/tutorial/sgemm_1.cu
-*/
+/***************************************************************************************************
+ * Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ **************************************************************************************************/
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
@@ -126,7 +153,7 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
   // Clear the accumulators
   clear(tCrC);
 
-// #if 0
+#if 0
   if(thread0()) {
     print("  mA : "); print(  mA); print("\n");
     print("  gA : "); print(  gA); print("\n");
@@ -134,9 +161,9 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
     print("tAgA : "); print(tAgA); print("\n");
     print("tAsA : "); print(tAsA); print("\n");
   }
-// #endif
+#endif
 
-// #if 0
+#if 0
   if(thread0()) {
     print("  mB : "); print(  mB); print("\n");
     print("  gB : "); print(  gB); print("\n");
@@ -144,9 +171,9 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
     print("tBgB : "); print(tBgB); print("\n");
     print("tBsB : "); print(tBsB); print("\n");
   }
-// #endif
+#endif
 
-// #if 0
+#if 1
   if(thread0()) {
     print("  mC : "); print(  mC); print("\n");
     print("  gC : "); print(  gC); print("\n");
@@ -155,42 +182,9 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
     print("tCgC : "); print(tCgC); print("\n");
     print("tCrC : "); print(tCrC); print("\n");
   }
-// #endif
+#endif
 
-/*
-M = 5120
-N = 5120
-K = 4096
-
-bM = Int<128>{}
-bN = Int<128>{}
-bK = Int<  8>{}
-cta_tiler = make_shape(bM, bN, bK)
-
-tAgA : (_4,_1,512):(_32,_0,40960)      local_partition(gA, tA, threadIdx.x)
-tAsA : (_4,_1):(_32,_0)                local_partition(sA, tA, threadIdx.x)
-tCsA : (_8,_8):(_16,_128)              local_partition(sA, tC, threadIdx.x, Step<_1, X>{})
-
-tBgB : (_4,_1,512):(_32,_0,40960)      local_partition(gB, tB, threadIdx.x)
-tBsB : (_4,_1):(_32,_0)                local_partition(sB, tB, threadIdx.x)
-tCsB : (_8,_8):(_16,_128)              local_partition(sB, tC, threadIdx.x, Step< X,_1>{})
-
-tCrC : (_8,_8):(_1,_8)                 make_tensor_like(tCgC)
-tCgC : (_8,_8):(_16,81920)             local_partition(gC, tC, threadIdx.x, Step<_1,_1>{})
-
-  mA : (5120,4096):(_1,5120)
-  gA : (_128,_8,512):(_1,5120,40960)   local_tile(mA, cta_tiler, cta_coord, Step<_1, X,_1>{})nu
-  sA : (_128,_8):(_1,_128)
-
-  mB : (5120,4096):(_1,5120)
-  gB : (_128,_8,512):(_1,5120,40960)   local_tile(mB, cta_tiler, cta_coord, Step< X,_1,_1>{})
-  sB : (_128,_8):(_1,_128)
-
-  mC : (5120,5120):(_1,5120)
-  gC : (_128,_128):(_1,5120)           local_tile(mC, cta_tiler, cta_coord, Step<_1,_1, X>{})
-*/
-
-#if 1
+#if 0
 
   // TUTORIAL: Example of a simple mainloop that read tiles of data into shared memory,
   //           and then computes on those tiles.
@@ -217,6 +211,8 @@ tCgC : (_8,_8):(_16,81920)             local_partition(gC, tC, threadIdx.x, Step
     __syncthreads();         // Wait for all threads to write to smem
 
     // Compute gemm on tC thread-partitioned smem
+    
+    Tensor  
     gemm(tCsA, tCsB, tCrC);            // (THR_M,THR_N) += (THR_M,BLK_K) * (THR_N,BLK_K)
 
     // TUTORIAL: The above call to gemm(tCsA, tCsB, tCrC) is equivalent to
@@ -302,14 +298,101 @@ gemm_nt(int m, int n, int k,
        alpha, beta);
 }
 
+// Setup params for a TN GEMM
+// Use padded m-major smem sA, padded n-major smem sB, and k-major threads tA|tB
+template <class TA, class TB, class TC,
+          class Alpha, class Beta>
+void
+gemm_tn(int m, int n, int k,
+        Alpha alpha,
+        TA const* A, int ldA,
+        TB const* B, int ldB,
+        Beta beta,
+        TC      * C, int ldC,
+        cudaStream_t stream = 0)
+{
+  using namespace cute;
+
+  // Define shapes (dynamic)
+  auto M = int(m);
+  auto N = int(n);
+  auto K = int(k);
+  auto prob_shape = make_shape(M, N, K);                     // (M, N, K)
+
+  // Define TN strides (mixed)
+  auto dA = make_stride(ldA, Int<1>{});                      // (dM, dK)
+  auto dB = make_stride(ldB, Int<1>{});                      // (dN, dK)
+  auto dC = make_stride(Int<1>{}, ldC);                      // (dM, dN)
+
+  // Define CTA tile sizes (static)
+  auto bM = Int<128>{};
+  auto bN = Int<128>{};
+  auto bK = Int<  8>{};
+  auto cta_tiler = make_shape(bM, bN, bK);                   // (BLK_M, BLK_N, BLK_K)
+
+  // Define the smem layouts (static)
+  auto sA = make_layout(make_shape(bM,bK), LayoutRight{});   // (m,k) -> smem_idx; k-major
+  auto sB = make_layout(make_shape(bN,bK), LayoutRight{});   // (n,k) -> smem_idx; k-major
+  auto sC = make_layout(make_shape(bM, bN));                 // (m,n) -> smem_idx; m-major
+
+  // Define the thread layouts (static)
+  auto tA = make_layout(make_shape(Int<32>{}, Int< 8>{}), LayoutRight{});  // (m,k) -> thr_idx; k-major
+  auto tB = make_layout(make_shape(Int<32>{}, Int< 8>{}), LayoutRight{});  // (n,k) -> thr_idx; k-major
+  auto tC = make_layout(make_shape(Int<16>{}, Int<16>{}));                 // (m,n) -> thr_idx; m-major
+
+  dim3 dimBlock(size(tC));
+  dim3 dimGrid(size(ceil_div(M, bM)),
+               size(ceil_div(N, bN)));
+  gemm_device<<<dimGrid, dimBlock, 0, stream>>>
+      (prob_shape, cta_tiler,
+       A, dA, sA, tA,
+       B, dB, sB, tB,
+       C, dC, sC, tC,
+       alpha, beta);
+}
+
+template <class TA, class TB, class TC,
+          class Alpha, class Beta>
+void
+gemm(char transA, char transB, int m, int n, int k,
+     Alpha alpha,
+     TA const* A, int ldA,
+     TB const* B, int ldB,
+     Beta beta,
+     TC      * C, int ldC,
+     cudaStream_t stream = 0)
+{
+  if (transA == 'N' && transB == 'T') {
+    return gemm_nt(m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+  } else
+  if (transA == 'T' && transB == 'N') {
+    return gemm_tn(m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+  }
+  assert(false && "Not implemented");
+}
+
+
 int main(int argc, char** argv)
 {
   int m = 5120;
+  if (argc >= 2)
+    sscanf(argv[1], "%d", &m);
+
   int n = 5120;
+  if (argc >= 3)
+    sscanf(argv[2], "%d", &n);
+
   int k = 4096;
-  
+  if (argc >= 4)
+    sscanf(argv[3], "%d", &k);
+
   char transA = 'N';
+  if (argc >= 5)
+    sscanf(argv[4], "%c", &transA);
+
   char transB = 'T';
+  if (argc >= 6)
+    sscanf(argv[5], "%c", &transB);
 
   using TA = float;
   using TB = float;
@@ -338,17 +421,53 @@ int main(int argc, char** argv)
   thrust::device_vector<TB> d_B = h_B;
   thrust::device_vector<TC> d_C = h_C;
 
-  int ldA = m, ldB = n, ldC = m;
+  double gflops = (2.0*m*n*k) * 1e-9;
 
+  const int timing_iterations = 100;
+  GPU_Clock timer;
+
+  int ldA = 0, ldB = 0, ldC = m;
+
+  if (transA == 'N') {
+    ldA = m;
+  } else if (transA == 'T') {
+    ldA = k;
+  } else {
+    assert(false);
+  }
+
+  if (transB == 'N') {
+    ldB = k;
+  } else if (transB == 'T') {
+    ldB = n;
+  } else {
+    assert(false);
+  }
+  // Run once
   d_C = h_C;
-  gemm_nt(m, n, k, alpha, 
-          d_A.data().get(), ldA, 
-          d_B.data().get(), ldB, 
-          beta, 
-          d_C.data().get(), ldC, /*stream*/0);
+  gemm(transA, transB, m, n, k,
+       alpha,
+       d_A.data().get(), ldA,
+       d_B.data().get(), ldB,
+       beta,
+       d_C.data().get(), ldC);
   CUTE_CHECK_LAST();
   thrust::host_vector<TC> cute_result = d_C;
 
+#if 0
+  // Timing iterations
+  timer.start();
+  for (int i = 0; i < timing_iterations; ++i) {
+    gemm(transA, transB, m, n, k,
+         alpha,
+         d_A.data().get(), ldA,
+         d_B.data().get(), ldB,
+         beta,
+         d_C.data().get(), ldC);
+  }
+  double cute_time = timer.seconds() / timing_iterations;
   CUTE_CHECK_LAST();
+  printf("CUTE_GEMM:     [%6.1f]GFlop/s  (%6.4f)ms\n", gflops / cute_time, cute_time*1000);
+#endif
   return 0;
 }
