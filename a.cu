@@ -41,8 +41,8 @@ f(cute::half_t const *A,
   using namespace cute;
 
   Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_shape(_16{}, _8{}));
-  Tensor mC = make_tensor(make_gmem_ptr(C), make_shape(_16{}, _8{})); 
+  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_8{}, _16{}), make_stride(_16{}, _1{})));
+  Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(_16{}, _8{}), make_stride(_8{}, _1{})));
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
   auto rC = thrmma.partition_fragment_C(mC);
@@ -53,7 +53,7 @@ f(cute::half_t const *A,
   auto tCmA = thrmma.partition_A(mA);
   auto tCmB = thrmma.partition_B(mB);
 
-#if 1
+#if 0
   if (thread0()) {
     print("mA : "); print(mA); print("\n");
     print("mB : "); print(mB); print("\n");
@@ -81,7 +81,7 @@ tCmB : gmem_ptr[16b](0x7f521bc00200) o ((_2,_2),_2,_1):((_16,_128),_8,_0)
 tCmC : gmem_ptr[16b](0x7f521bc00400) o ((_2,_2),_1,_1):((_16,_8),_0,_0)
 */
 
-#if 0
+#if 1
   copy(tCmA, rA);
   copy(tCmB, rB);
   gemm(my_mma, rA, rB, rC);
