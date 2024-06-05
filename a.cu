@@ -2,6 +2,8 @@
 #include <thrust/device_vector.h>
 #include <cute/tensor.hpp>
 
+#include "cutlass/util/print_error.hpp"
+
 #include <iostream>
 #include <cassert>
 #include <cmath>
@@ -52,8 +54,21 @@ f(cute::half_t const *A,
   auto tCmA = thrmma.partition_A(mA);
   auto tCmB = thrmma.partition_B(mB);
 
+#if 1
+  print("mA : "); print(mA); print("\n");
+  print("mB : "); print(mB); print("\n");
+  print("mC : "); print(mC); print("\n");
+  print("rA : "); print(rA); print("\n");
+  print("rB : "); print(rB); print("\n");
+  print("rC : "); print(rC); print("\n");
+  print("tCmA : "); print(tCmA); print("\n");
+  print("tCmB : "); print(tCmB); print("\n");
+  print("tCmC : "); print(tCmC); print("\n");
+#endif
+#if 0
   gemm(my_mma, rA, rB, rC);
   copy(rC, tCmC);
+#endif
   return;
 }
 
@@ -90,6 +105,7 @@ int main() {
   thrust::copy(d_C.begin(), d_C.end(), h_C.begin());
   assert(areMatricesEqual(h_C.data(), h_C_ref.data(), m, n));
 
-  std::cout << "Success" << std::endl;
+  std::cout << "Success!" << std::endl;
   return 0;
 }
+
