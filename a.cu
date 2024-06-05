@@ -40,7 +40,7 @@ f(cute::half_t const *A,
   TiledMma            my_mma) {
   using namespace cute;
 
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_shape(_8{}, _16{}));
+  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
   Tensor mB = make_tensor(make_gmem_ptr(B), make_shape(_8{}, _16{}));
   Tensor mC = make_tensor(make_gmem_ptr(C), make_shape(_16{}, _8{})); 
   auto thrmma = my_mma.get_slice(threadIdx.x);
