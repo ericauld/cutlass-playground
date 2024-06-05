@@ -54,16 +54,33 @@ f(cute::half_t const *A,
   auto tCmB = thrmma.partition_B(mB);
 
 #if 1
-  print("mA : "); print(mA); print("\n");
-  print("mB : "); print(mB); print("\n");
-  print("mC : "); print(mC); print("\n");
-  print("rA : "); print(rA); print("\n");
-  print("rB : "); print(rB); print("\n");
-  print("rC : "); print(rC); print("\n");
-  print("tCmA : "); print(tCmA); print("\n");
-  print("tCmB : "); print(tCmB); print("\n");
-  print("tCmC : "); print(tCmC); print("\n");
+  if (thread0()) {
+    print("mA : "); print(mA); print("\n");
+    print("mB : "); print(mB); print("\n");
+    print("mC : "); print(mC); print("\n");
+    print("rA : "); print(rA); print("\n");
+    print("rB : "); print(rB); print("\n");
+    print("rC : "); print(rC); print("\n");
+    print("tCmA : "); print(tCmA); print("\n");
+    print("tCmB : "); print(tCmB); print("\n");
+    print("tCmC : "); print(tCmC); print("\n");
+  }
 #endif
+
+/*
+static_assert(decltype(size<1>(B) == size<2>(C))::value);
+
+mA : gmem_ptr[16b](0x7f521bc00000) o (_16,_16):(_16,_1)
+mB : gmem_ptr[16b](0x7f521bc00200) o (_16,_8):(_1,_16)
+mC : gmem_ptr[16b](0x7f521bc00400) o (_16,_8):(_1,_16)
+rA : ptr[16b](0x7f5240fffca0) o ((_2,_2,_2),_1,_1):((_1,_2,_4),_0,_0)
+rB : ptr[16b](0x7f5240fffcb0) o ((_2,_2),_2,_1):((_1,_2),_4,_0)
+rC : ptr[16b](0x7f5240fffc90) o ((_2,_2),_1,_1):((_1,_2),_0,_0)
+tCmA : gmem_ptr[16b](0x7f521bc00000) o ((_2,_2,_2),_1,_1):((_1,_128,_8),_0,_0)
+tCmB : gmem_ptr[16b](0x7f521bc00200) o ((_2,_2),_2,_1):((_16,_128),_8,_0)
+tCmC : gmem_ptr[16b](0x7f521bc00400) o ((_2,_2),_1,_1):((_16,_8),_0,_0)
+*/
+
 #if 0
   copy(tCmA, rA);
   copy(tCmB, rB);
