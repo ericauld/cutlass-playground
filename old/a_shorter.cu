@@ -16,11 +16,14 @@ f(cute::half_t const *A,
   using namespace cute;
 
   // mA is k-major, i.e. "row major" i.e. "not transposed"
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
+  Tensor mA = make_tensor(make_gmem_ptr(A), 
+                          make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
   // mB is k-major, i.e. "column major" i.e. "transposed"
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_8{}, _16{}), make_stride(_16{}, _1{})));
+  Tensor mB = make_tensor(make_gmem_ptr(B), 
+                          make_layout(make_shape(_8{}, _16{}), make_stride(_16{}, _1{})));
   // mC is n-major, i.e. "row major"
-  Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(_16{}, _8{}), make_stride(_8{}, _1{})));
+  Tensor mC = make_tensor(make_gmem_ptr(C), 
+                          make_layout(make_shape(_16{}, _8{}), make_stride(_8{}, _1{})));
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
   auto rC = thrmma.partition_fragment_C(mC);
@@ -52,9 +55,12 @@ int main() {
   thrust::host_vector<TA> h_C(m*n);
   thrust::host_vector<TA> h_C_ref(m*n);
 
-  for (int j = 0; j < m*k; ++j) h_A[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
-  for (int j = 0; j < n*k; ++j) h_B[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
-  for (int j = 0; j < m*n; ++j) h_C[j] = 0;
+  for (int j = 0; j < m*k; ++j) 
+    h_A[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
+  for (int j = 0; j < n*k; ++j) 
+    h_B[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
+  for (int j = 0; j < m*n; ++j) 
+    h_C[j] = 0;
 
   thrust::device_vector<TA> d_A = h_A;
   thrust::device_vector<TA> d_B = h_B;
