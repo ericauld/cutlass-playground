@@ -38,9 +38,9 @@ f(cute::half_t const *A,
   TiledMma            my_mma) {
   using namespace cute;
 
-  // mA is k-major, i.e. "row major"
+  // mA is k-major, i.e. "row major" i.e. "not transposed"
   Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
-  // mB is k-major, i.e. "column major"
+  // mB is k-major, i.e. "column major" i.e. "transposed"
   Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_8{}, _16{}), make_stride(_16{}, _1{})));
   // mC is n-major, i.e. "row major"
   Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(_16{}, _8{}), make_stride(_8{}, _1{})));
@@ -67,20 +67,6 @@ f(cute::half_t const *A,
     print("tCmC : "); print(tCmC); print("\n");
   }
 #endif
-
-/*
-static_assert(decltype(size<1>(B) == size<2>(C))::value);
-
-mA : gmem_ptr[16b](0x7f521bc00000) o (_16,_16):(_16,_1)
-mB : gmem_ptr[16b](0x7f521bc00200) o (_16,_8):(_1,_16)
-mC : gmem_ptr[16b](0x7f521bc00400) o (_16,_8):(_1,_16)
-rA : ptr[16b](0x7f5240fffca0) o ((_2,_2,_2),_1,_1):((_1,_2,_4),_0,_0)
-rB : ptr[16b](0x7f5240fffcb0) o ((_2,_2),_2,_1):((_1,_2),_4,_0)
-rC : ptr[16b](0x7f5240fffc90) o ((_2,_2),_1,_1):((_1,_2),_0,_0)
-tCmA : gmem_ptr[16b](0x7f521bc00000) o ((_2,_2,_2),_1,_1):((_1,_128,_8),_0,_0)
-tCmB : gmem_ptr[16b](0x7f521bc00200) o ((_2,_2),_2,_1):((_16,_128),_8,_0)
-tCmC : gmem_ptr[16b](0x7f521bc00400) o ((_2,_2),_1,_1):((_16,_8),_0,_0)
-*/
 
 #if 1
   copy(tCmA, rA);
