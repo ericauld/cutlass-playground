@@ -53,7 +53,6 @@ int main() {
   thrust::host_vector<TA> h_A(m*k);
   thrust::host_vector<TA> h_B(k*n);
   thrust::host_vector<TA> h_C(m*n);
-  thrust::host_vector<TA> h_C_ref(m*n);
 
   for (int j = 0; j < m*k; ++j) 
     h_A[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
