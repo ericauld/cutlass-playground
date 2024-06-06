@@ -54,7 +54,7 @@ f(cute::half_t const *A,
   auto tCmA = thrmma.partition_A(mA);
   auto tCmB = thrmma.partition_B(mB);
 
-#if 0
+#if 1
   if (thread0()) {
     print("mA : "); print(mA); print("\n");
     print("mB : "); print(mB); print("\n");
@@ -67,11 +67,22 @@ f(cute::half_t const *A,
     print("tCmC : "); print(tCmC); print("\n");
   }
 #endif
-
+/*
+mA : gmem_ptr[16b](0x7f88a3c00000) o (_32,_32):(_32,_1)
+mB : gmem_ptr[16b](0x7f88a3c00800) o (_16,_32):(_32,_1)
+mC : gmem_ptr[16b](0x7f88a3c00c00) o (_32,_16):(_16,_1)
+rA : ptr[16b](0x7f88ccfffca0) o ((_2,_2,_2),_1,_1):((_1,_2,_4),_0,_0)
+rB : ptr[16b](0x7f88ccfffcb0) o ((_2,_2),_1,_1):((_1,_2),_0,_0)
+rC : ptr[16b](0x7f88ccfffc90) o ((_2,_2),_1,_1):((_1,_2),_0,_0)
+tCmA : gmem_ptr[16b](0x7f88a3c00000) o ((_2,_2,_2),_1,_1):((_1,_256,_8),_0,_0)
+tCmB : gmem_ptr[16b](0x7f88a3c00800) o ((_2,_2),_1,_1):((_1,_8),_0,_0)
+tCmC : gmem_ptr[16b](0x7f88a3c00c00) o ((_2,_2),_1,_1):((_1,_128),_0,_0)
+*/
 #if 1
   copy(tCmA, rA);
   copy(tCmB, rB);
   gemm(my_mma, rA, rB, rC);
+  __syncthreads();
   copy(rC, tCmC);
 #endif
   return;
@@ -110,7 +121,7 @@ int main() {
   thrust::device_vector<TA> d_C = h_C;
 
   using op = SM80_16x8x16_F16F16F16F16_TN;
-  auto tiled_mma = make_tiled_mma(op{}, make_layout(make_shape(_2{}, _2{}, _2{}))); 
+  auto tiled_mma = make_tiled_mma(op{}, make_layout(make_shape(_2{}, _2{}, _2{})));
 
   dim3 dimGrid(1);
   dim3 dimBlock(256);
@@ -118,16 +129,16 @@ int main() {
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
-#if 1
+#if 0
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), n, k); print("\n\n");
   print("cute_result : "); printMatrix(cute_result.data(), m, n); print("\n\n");
 #endif
-# if 1
+# if 0
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
-#endif
   std::cout << "Success!" << std::endl;
+#endif
   return 0;
 }
