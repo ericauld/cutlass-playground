@@ -72,7 +72,8 @@ int main() {
   dim3 dimGrid(1);
   dim3 dimBlock(32);
   
-  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
+  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), 
+                           tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
   return 0;
