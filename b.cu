@@ -38,9 +38,9 @@ f(cute::half_t const *A,
   TiledMma            my_mma) {
   using namespace cute;
 
-  // mA is k-major, i.e. "row major" i.e. "transposed"
+  // mA is k-major, i.e. "row major" i.e. "not transposed"
   Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_32{}, _16{}), make_stride(_16{}, _1{})));
-  // mB is k-major, i.e. "column major" i.e. "not transposed"
+  // mB is k-major, i.e. "column major" i.e. "transposed"
   Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
   // mC is n-major, i.e. "row major"
   Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(_32{}, _16{}), make_stride(_16{}, _1{})));
@@ -110,7 +110,7 @@ int main() {
   thrust::device_vector<TA> d_C = h_C;
 
   using op = SM80_16x8x16_F16F16F16F16_TN;
-  auto tiled_mma = make_tiled_mma(op{}, make_layout(make_shape(_2{}, _2{}, _1{}))); 
+  auto tiled_mma = make_tiled_mma(op{}, make_layout(make_shape(_2{}, _2{}, _1{})));
 
   dim3 dimGrid(1);
   dim3 dimBlock(128);
@@ -118,16 +118,18 @@ int main() {
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
+#if 1
+  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
+#endif
 #if 0
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
-  print("h_B : "); printMatrix(h_B.data(), n, k); print("\n\n");
+  print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
   print("cute_result : "); printMatrix(cute_result.data(), m, n); print("\n\n");
   print("h_C_ref : "); printMatrix(h_C_ref.data(), m, n); print("\n\n");
 #endif
-# if 1
-  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
+#if 1
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
-#endif
   std::cout << "Success!" << std::endl;
+#endif
   return 0;
 }
