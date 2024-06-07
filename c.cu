@@ -46,7 +46,7 @@ f(cute::half_t const *A,
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
   auto cta_tiler = make_shape(_16{}, _8{}, _16{});
-  auto cta_coord = make_coord(blockIdx.x, blockIdx.y, _);
+  auto cta_coord = make_coord(blockIdx.x, blockIdx.y, 0);
   Tensor gA = local_tile(mA, cta_tiler, cta_coord, Step<_1, X, _1>{});
   Tensor gB = local_tile(mB, cta_tiler, cta_coord, Step<X, _1, _1>{});
   Tensor gC = local_tile(mC, cta_tiler, cta_coord, Step<_1, _1, X>{});
@@ -60,7 +60,7 @@ f(cute::half_t const *A,
   auto tCgA = thrmma.partition_A(gA);
   auto tCgB = thrmma.partition_B(gB);
 
-#if 1
+#if 0
   if (thread0()) {
     print("mA : "); print(mA); print("\n");
     print("mB : "); print(mB); print("\n");
@@ -204,7 +204,7 @@ int main() {
                            m, n, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
-#if 0
+#if 1
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #endif
 #if 0
@@ -213,7 +213,7 @@ int main() {
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
   print("cute_result : "); printMatrix(cute_result.data(), m, n); print("\n\n");
 #endif
-#if 0
+#if 1
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
   std::cout << "Success!" << std::endl;
 #endif
