@@ -115,6 +115,37 @@ const cute::MMA_Atom<cute::SM80_16x8x16_F16F16F16F16_TN>,
         cute::Layout<
             cute::tuple<cute::tuple<cute::_2, cute::_2>, cute::_1, cute::_1>,
             cute::tuple<cute::tuple<cute::_1, cute::_2>, cute::_0, cute::C<0>>>>
+
+During instantiation of:
+
+    void
+    cute::gemm(const cute::MMA_Atom<MMA> &, const cute::Tensor<TA, ALayout> &,
+               const cute::Tensor<TB, BLayout> &, cute::Tensor<TC, CLayout> &)
+
+with
+
+        MMA = cute::SM80_16x8x16_F16F16F16F16_TN
+
+    TA = cute::ArrayEngine<cutlass::half_t, 8>
+
+    ALayout =
+        cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2, cute::_2>,
+                                 cute::_1, cute::_1, cute::_1>,
+                     cute::tuple<cute::tuple<cute::_1, cute::_2, cute::_4>,
+                                 cute::C<0>, cute::_0, cute::C<0>>>
+
+    TB = cute::ArrayEngine<cutlass::half_t, 4>
+
+    BLayout = cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2>,
+                                       cute::_1, cute::_1, cute::_1>,
+                           cute::tuple<cute::tuple<cute::_1, cute::_2>,
+                                       cute::C<0>, cute::_0, cute::C<0>>>
+
+    TC = cute::ArrayEngine<cutlass::half_t, 4>
+
+    CLayout = cute::Layout<
+        cute::tuple<cute::tuple<cute::_2, cute::_2>, cute::_1, cute::_1>,
+        cute::tuple<cute::tuple<cute::_1, cute::_2>, cute::_0, cute::C<0>>>
 */
 #if 1
   copy(tCgA, rA);
