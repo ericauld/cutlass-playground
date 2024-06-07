@@ -39,9 +39,9 @@ f(cute::half_t const *A,
   TiledMma            my_mma) {
   using namespace cute;
 
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(m, _16{}), make_stride(_16{}, 1)));
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(n, _16{}), make_stride(_16{}, 1)));
-  Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(m, n), make_stride(n, 1)));
+  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(m, _16{}), make_stride(_16{}, _1{})));
+  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(n, _16{}), make_stride(_16{}, _1{})));
+  Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(m, n), make_stride(n, _1{})));
 
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
@@ -77,77 +77,44 @@ f(cute::half_t const *A,
   }
 #endif
 /*
-mA : gmem_ptr[16b](0x7efc83c00000) o (80,_16):(_16,1)
-mB : gmem_ptr[16b](0x7efc83c00a00) o (48,_16):(_16,1)
-mC : gmem_ptr[16b](0x7efc83c01000) o (80,48):(48,1)
-gA : gmem_ptr[16b](0x7efc83c00000) o (_16,_16,_1):(_16,1,_0)
-gB : gmem_ptr[16b](0x7efc83c00a00) o (_8,_16,_1):(_16,1,_0)
-gC : gmem_ptr[16b](0x7efc83c01000) o (_16,_8):(48,1)
-rA : ptr[16b](0x7efcadfffca0) o ((_2,_2,_2),_1,_1,_1):((_1,_2,_4),_0,_0,_0)
-rB : ptr[16b](0x7efcadfffcb0) o ((_2,_2),_1,_1,_1):((_1,_2),_0,_0,_0)
-rC : ptr[16b](0x7efcadfffc90) o ((_2,_2),_1,_1):((_1,_2),_0,_0)
-tCgA : gmem_ptr[16b](0x7efc83c00000) o ((_2,_2,_2),_1,_1,_1):((1,_128,8),_0,_0,_0)
-tCgB : gmem_ptr[16b](0x7efc83c00a00) o ((_2,_2),_1,_1,_1):((1,8),_0,_0,_0)
-tCgC : gmem_ptr[16b](0x7efc83c01000) o ((_2,_2),_1,_1):((1,384),_0,_0)
-
-/teamspace/studios/this_studio/cup/cutlass/include/cute/algorithm/gemm.hpp(97):
-
-
-error: no instance of overloaded function "cute::gemm" matches the argument list
+mA : gmem_ptr[16b](0x7f280bc00000) o (80,_16):(_16,_1)
+mB : gmem_ptr[16b](0x7f280bc00a00) o (48,_16):(_16,_1)
+mC : gmem_ptr[16b](0x7f280bc01000) o (80,48):(48,_1)
+gA : gmem_ptr[16b](0x7f280bc00000) o (_16,_16,_1):(_16,_1,_0)
+gB : gmem_ptr[16b](0x7f280bc00a00) o (_8,_16,_1):(_16,_1,_0)
+gC : gmem_ptr[16b](0x7f280bc01000) o (_16,_8):(48,_1)
+rA : ptr[16b](0x7f282ffffcb0) o ((_2,_2,_2),_1,_1,_1):((_1,_2,_4),_0,_0,_0)
+rB : ptr[16b](0x7f282ffffcc0) o ((_2,_2),_1,_1,_1):((_1,_2),_0,_0,_0)
+rC : ptr[16b](0x7f282ffffca0) o ((_2,_2),_1,_1):((_1,_2),_0,_0)
+tCgA : gmem_ptr[16b](0x7f280bc00000) o ((_2,_2,_2),_1,_1,_1):((_1,_128,_8),_0,_0,_0)
+tCgB : gmem_ptr[16b](0x7f280bc00a00) o ((_2,_2),_1,_1,_1):((_1,_8),_0,_0,_0)
+tCgC : gmem_ptr[16b](0x7f280bc01000) o ((_2,_2),_1,_1):((_1,384),_0,_0)
 
 argument types are:
 
-(const cute::MMA_Atom<cute::SM80_16x8x16_F16F16F16F16_TN>,
-
- cute::Tensor<cute::ArrayEngine<cutlass::half_t, 4>,
-              cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2>,
-                                       cute::_1,
-                                       cute::_1
-                                      >,
-                           cute::tuple<cute::tuple<cute::_1, cute::_2>,
-                                       cute::_0,
-                                       cute::C<0>
-                                      >
-                          >
-             >,
- const cute::Tensor<cute::ArrayEngine<cutlass::half_t, 8>,
-                    cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2, cute::_2>,
-                                             cute::_1,
-                                             cute::_1,
-                                             cute::_1
-                                            >,
-                                 cute::tuple<cute::tuple<cute::_1, cute::_2, cute::_4>,
-                                             cute::C<0>,
-                                             cute::_0,
-                                             cute::C<0>
-                                            >
-                                >
-                   >,
- const cute::Tensor<cute::ArrayEngine<cutlass::half_t, 4>,
-                     cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2>,
-                                              cute::_1,
-                                              cute::_1,
-                                              cute::_1
-                                             >,
-                                  cute::tuple<cute::tuple<cute::_1, cute::_2>,
-                                              cute::C<0>,
-                                              cute::_0,
-                                              cute::C<0>
-                                             >
-                                 >
-                    >,
- cute::Tensor<cute::ArrayEngine<cutlass::half_t, 4>,
-              cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2>,
-                                       cute::_1,
-                                       cute::_1
-                                      >,
-                           cute::tuple<cute::tuple<cute::_1, cute::_2>,
-                                       cute::_0,
-                                       cute::C<0>
-                                      >
-                          >
-             >
-)
+const cute::MMA_Atom<cute::SM80_16x8x16_F16F16F16F16_TN>,
+    cute::Tensor<cute::ArrayEngine<cutlass::half_t, 4>,
+                 cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2>,
+                                          cute::_1, cute::_1>,
+                              cute::tuple<cute::tuple<cute::_1, cute::_2>,
+                                          cute::_0, cute::C<0>>>>,
+    const cute::Tensor<
+        cute::ArrayEngine<cutlass::half_t, 8>,
+        cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2, cute::_2>,
+                                 cute::_1, cute::_1, cute::_1>,
+                     cute::tuple<cute::tuple<cute::_1, cute::_2, cute::_4>,
+                                 cute::C<0>, cute::_0, cute::C<0>>>>,
+    const cute::Tensor<
+        cute::ArrayEngine<cutlass::half_t, 4>,
+        cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2>, cute::_1,
+                                 cute::_1, cute::_1>,
+                     cute::tuple<cute::tuple<cute::_1, cute::_2>, cute::C<0>,
+                                 cute::_0, cute::C<0>>>>,
+    cute::Tensor<
+        cute::ArrayEngine<cutlass::half_t, 4>,
+        cute::Layout<
+            cute::tuple<cute::tuple<cute::_2, cute::_2>, cute::_1, cute::_1>,
+            cute::tuple<cute::tuple<cute::_1, cute::_2>, cute::_0, cute::C<0>>>>
 */
 #if 1
   copy(tCgA, rA);
