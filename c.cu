@@ -149,7 +149,7 @@ argument types are:
              >
 )
 */
-#if 0
+#if 1
   copy(tCgA, rA);
   copy(tCgB, rB);
   gemm(my_mma, rA, rB, rC);
