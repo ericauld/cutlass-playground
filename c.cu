@@ -35,43 +35,64 @@ void
 f(cute::half_t const *A,
   cute::half_t const *B,
   cute::half_t       *C,
+  int m, int n,
   TiledMma            my_mma) {
   using namespace cute;
 
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_8{}, _16{}), make_stride(_16{}, _1{})));
-  Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(_16{}, _8{}), make_stride(_8{}, _1{})));
+  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(m, _16{}), make_stride(_16{}, 1)));
+  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(n, _16{}), make_stride(_16{}, 1)));
+  Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(m, n), make_stride(n, 1)));
+
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
-  auto cta_coord = make_coord(blockIdx.x, blockIdx.y);
-  Tensor gC = local_tile(mC, make_shape(_16{}, _8{}), cta_coord);
+  auto cta_tiler = make_shape(_16{}, _8{}, _16{});
+  auto cta_coord = make_coord(blockIdx.x, blockIdx.y, _);
+  Tensor gA = local_tile(mA, cta_tiler, cta_coord, Step<_1, X, _1>{});
+  Tensor gB = local_tile(mB, cta_tiler, cta_coord, Step<X, _1, _1>{});
+  Tensor gC = local_tile(mC, cta_tiler, cta_coord, Step<_1, _1, X>{});
+
   Tensor tCgC = thrmma.partition_C(gC);
 
-  auto rC = thrmma.partition_fragment_C(mC);
+  auto rC = thrmma.partition_fragment_C(gC);
   clear(rC);
-  auto rA = thrmma.partition_fragment_A(mA);
-  auto rB = thrmma.partition_fragment_B(mB);
-  auto tCmC = thrmma.partition_C(mC);
-  auto tCmA = thrmma.partition_A(mA);
-  auto tCmB = thrmma.partition_B(mB);
+  auto rA = thrmma.partition_fragment_A(gA);
+  auto rB = thrmma.partition_fragment_B(gB);
+  auto tCgA = thrmma.partition_A(gA);
+  auto tCgB = thrmma.partition_B(gB);
 
-#if 0
+#if 1
   if (thread0()) {
     print("mA : "); print(mA); print("\n");
     print("mB : "); print(mB); print("\n");
     print("mC : "); print(mC); print("\n");
+    print("gA : "); print(gA); print("\n");
+    print("gB : "); print(gB); print("\n");
+    print("gC : "); print(gC); print("\n");
     print("rA : "); print(rA); print("\n");
     print("rB : "); print(rB); print("\n");
     print("rC : "); print(rC); print("\n");
-    print("tCmA : "); print(tCmA); print("\n");
-    print("tCmB : "); print(tCmB); print("\n");
-    print("tCmC : "); print(tCmC); print("\n");
+    print("tCgA : "); print(tCgA); print("\n");
+    print("tCgB : "); print(tCgB); print("\n");
+    print("tCgC : "); print(tCgC); print("\n");
   }
 #endif
-
-#if 1
-  copy(tCmA, rA);
-  copy(tCmB, rB);
+/*
+mA : gmem_ptr[16b](0x7efc83c00000) o (80,_16):(_16,1)
+mB : gmem_ptr[16b](0x7efc83c00a00) o (48,_16):(_16,1)
+mC : gmem_ptr[16b](0x7efc83c01000) o (80,48):(48,1)
+gA : gmem_ptr[16b](0x7efc83c00000) o (_16,_16,_1):(_16,1,_0)
+gB : gmem_ptr[16b](0x7efc83c00a00) o (_8,_16,_1):(_16,1,_0)
+gC : gmem_ptr[16b](0x7efc83c01000) o (_16,_8):(48,1)
+rA : ptr[16b](0x7efcadfffca0) o ((_2,_2,_2),_1,_1,_1):((_1,_2,_4),_0,_0,_0)
+rB : ptr[16b](0x7efcadfffcb0) o ((_2,_2),_1,_1,_1):((_1,_2),_0,_0,_0)
+rC : ptr[16b](0x7efcadfffc90) o ((_2,_2),_1,_1):((_1,_2),_0,_0)
+tCgA : gmem_ptr[16b](0x7efc83c00000) o ((_2,_2,_2),_1,_1,_1):((1,_128,8),_0,_0,_0)
+tCgB : gmem_ptr[16b](0x7efc83c00a00) o ((_2,_2),_1,_1,_1):((1,8),_0,_0,_0)
+tCgC : gmem_ptr[16b](0x7efc83c01000) o ((_2,_2),_1,_1):((1,384),_0,_0)
+*/
+#if 0
+  copy(tCgA, rA);
+  copy(tCgB, rB);
   gemm(my_mma, rA, rB, rC);
   copy(rC, tCgC);
 #endif
@@ -122,19 +143,20 @@ int main() {
   dim3 dimGrid(m1, n1);
   dim3 dimBlock(32);
   
-  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
+  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(),
+                           m, n, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
-#if 1
+#if 0
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #endif
-#if 1
+#if 0
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
   print("cute_result : "); printMatrix(cute_result.data(), m, n); print("\n\n");
 #endif
-#if 1
+#if 0
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
   std::cout << "Success!" << std::endl;
 #endif
