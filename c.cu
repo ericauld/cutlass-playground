@@ -38,13 +38,14 @@ f(cute::half_t const *A,
   TiledMma            my_mma) {
   using namespace cute;
 
-  // mA is k-major, i.e. "row major" i.e. "not transposed"
   Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
-  // mB is k-major, i.e. "column major" i.e. "transposed"
   Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_8{}, _16{}), make_stride(_16{}, _1{})));
-  // mC is n-major, i.e. "row major"
   Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(_16{}, _8{}), make_stride(_8{}, _1{})));
   auto thrmma = my_mma.get_slice(threadIdx.x);
+
+  auto cta_coord = make_coord(blockIdx.x, blockIdx.y);
+  Tensor gC = local_tile(mC, make_shape(_16{}, _8{}), cta_coord);
+  Tensor tCgC = thrmma.partition_C(gC);
 
   auto rC = thrmma.partition_fragment_C(mC);
   clear(rC);
@@ -72,7 +73,7 @@ f(cute::half_t const *A,
   copy(tCmA, rA);
   copy(tCmB, rB);
   gemm(my_mma, rA, rB, rC);
-  copy(rC, tCmC);
+  copy(rC, tCgC);
 #endif
   return;
 }
@@ -91,16 +92,21 @@ void printMatrix(const cute::half_t* data, int m, int n) {
 int main() {
   using namespace cute;
 
-  int m = 16;
-  int n = 8;
-  int k = 16;
+  int Am = 16;
+  int An = 8;
+  int Ak = 16;
+  int m1 = 5;
+  int n1 = 6;
+  int k1 = 1;
+  int m = Am * m1;
+  int n = An * n1;
+  int k = Ak * k1;
 
   using TA = half_t;
 
-  thrust::host_vector<TA> h_A(m*k);
-  thrust::host_vector<TA> h_B(k*n);
-  thrust::host_vector<TA> h_C(m*n);
-  thrust::host_vector<TA> h_C_ref(m*n);
+  thrust::host_vector<TA> h_A(m * k);
+  thrust::host_vector<TA> h_B(n * k);
+  thrust::host_vector<TA> h_C(m * n);
 
   for (int j = 0; j < m*k; ++j) h_A[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
   for (int j = 0; j < n*k; ++j) h_B[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
@@ -113,22 +119,24 @@ int main() {
   using op = SM80_16x8x16_F16F16F16F16_TN;
   auto tiled_mma = make_tiled_mma(op{}, make_layout(make_shape(_1{}, _1{}, _1{}))); 
 
-  dim3 dimGrid(1);
+  dim3 dimGrid(m1, n1);
   dim3 dimBlock(32);
   
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
 
-  thrust::copy(d_C.begin(), d_C.end(), h_C.begin());
-#if 0
+  thrust::host_vector<TA> cute_result = d_C;
+#if 1
+  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
+#endif
+#if 1
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
-  print("h_C_ref : "); printMatrix(h_C_ref.data(), m, n); print("\n\n");
+  print("cute_result : "); printMatrix(cute_result.data(), m, n); print("\n\n");
 #endif
-# if 0
-  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
-  assert(areMatricesEqual(h_C.data(), h_C_ref.data(), m, n));
-#endif
+#if 1
+  assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
   std::cout << "Success!" << std::endl;
+#endif
   return 0;
 }
