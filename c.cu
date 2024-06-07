@@ -126,7 +126,7 @@ int main() {
   print("h_C_ref : "); printMatrix(h_C_ref.data(), m, n); print("\n\n");
 #endif
 # if 0
-  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C_ref.data(), m, n, k);
+  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
   assert(areMatricesEqual(h_C.data(), h_C_ref.data(), m, n));
 #endif
   std::cout << "Success!" << std::endl;
