@@ -89,6 +89,65 @@ rC : ptr[16b](0x7efcadfffc90) o ((_2,_2),_1,_1):((_1,_2),_0,_0)
 tCgA : gmem_ptr[16b](0x7efc83c00000) o ((_2,_2,_2),_1,_1,_1):((1,_128,8),_0,_0,_0)
 tCgB : gmem_ptr[16b](0x7efc83c00a00) o ((_2,_2),_1,_1,_1):((1,8),_0,_0,_0)
 tCgC : gmem_ptr[16b](0x7efc83c01000) o ((_2,_2),_1,_1):((1,384),_0,_0)
+
+/teamspace/studios/this_studio/cup/cutlass/include/cute/algorithm/gemm.hpp(97):
+
+
+error: no instance of overloaded function "cute::gemm" matches the argument list
+
+argument types are:
+
+(const cute::MMA_Atom<cute::SM80_16x8x16_F16F16F16F16_TN>,
+
+ cute::Tensor<cute::ArrayEngine<cutlass::half_t, 4>,
+              cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2>,
+                                       cute::_1,
+                                       cute::_1
+                                      >,
+                           cute::tuple<cute::tuple<cute::_1, cute::_2>,
+                                       cute::_0,
+                                       cute::C<0>
+                                      >
+                          >
+             >,
+ const cute::Tensor<cute::ArrayEngine<cutlass::half_t, 8>,
+                    cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2, cute::_2>,
+                                             cute::_1,
+                                             cute::_1,
+                                             cute::_1
+                                            >,
+                                 cute::tuple<cute::tuple<cute::_1, cute::_2, cute::_4>,
+                                             cute::C<0>,
+                                             cute::_0,
+                                             cute::C<0>
+                                            >
+                                >
+                   >,
+ const cute::Tensor<cute::ArrayEngine<cutlass::half_t, 4>,
+                     cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2>,
+                                              cute::_1,
+                                              cute::_1,
+                                              cute::_1
+                                             >,
+                                  cute::tuple<cute::tuple<cute::_1, cute::_2>,
+                                              cute::C<0>,
+                                              cute::_0,
+                                              cute::C<0>
+                                             >
+                                 >
+                    >,
+ cute::Tensor<cute::ArrayEngine<cutlass::half_t, 4>,
+              cute::Layout<cute::tuple<cute::tuple<cute::_2, cute::_2>,
+                                       cute::_1,
+                                       cute::_1
+                                      >,
+                           cute::tuple<cute::tuple<cute::_1, cute::_2>,
+                                       cute::_0,
+                                       cute::C<0>
+                                      >
+                          >
+             >
+)
 */
 #if 0
   copy(tCgA, rA);
