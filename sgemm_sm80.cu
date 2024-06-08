@@ -176,15 +176,6 @@ Copy_Atom
   ValLayoutDst: (_1,_4):(_0,_1)
   ValLayoutRef: (_1,_4):(_0,_1)
   ValueType:    32b
-TiledCopy
-  Tiler_MN:       (_128,_8)
-  TiledLayout_TV: (_256,_4):(_4,_1)
-Copy_Atom
-  ThrID:        _1:_0
-  ValLayoutSrc: (_1,_4):(_0,_1)
-  ValLayoutDst: (_1,_4):(_0,_1)
-  ValLayoutRef: (_1,_4):(_0,_1)
-  ValueType:    32b
 TiledMMA
   ThrLayoutVMNK:  (_1,_16,_16,_1):(_0,_1,_16,_0)
   PermutationMNK: (_,_,_)
