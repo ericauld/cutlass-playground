@@ -38,11 +38,8 @@ f(cute::half_t const *A,
   TiledMma            my_mma) {
   using namespace cute;
 
-  // mA is k-major, i.e. "row major" i.e. "not transposed"
   Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
-  // mB is k-major, i.e. "column major" i.e. "transposed"
   Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_8{}, _16{}), make_stride(_16{}, _1{})));
-  // mC is n-major, i.e. "row major"
   Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(_16{}, _8{}), make_stride(_8{}, _1{})));
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
@@ -91,14 +88,20 @@ void printMatrix(const cute::half_t* data, int m, int n) {
 int main() {
   using namespace cute;
 
-  int m = 16;
-  int n = 8;
-  int k = 16;
+  int Xm = 16;
+  int Xn = 8;
+  int Xk = 16;
+
+  int k1 = 7;
+
+  int m = Xm;
+  int n = Xn;
+  int k = Xk * k1;
 
   using TA = half_t;
 
   thrust::host_vector<TA> h_A(m*k);
-  thrust::host_vector<TA> h_B(k*n);
+  thrust::host_vector<TA> h_B(n*k);
   thrust::host_vector<TA> h_C(m*n);
 
   for (int j = 0; j < m*k; ++j) h_A[j] = static_cast<TA>( 2*(rand() / double(RAND_MAX)) - 1 );
@@ -118,6 +121,8 @@ int main() {
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
+#if 1
+  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #if 0
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
@@ -125,9 +130,8 @@ int main() {
   print("h_C_ref : "); printMatrix(h_C_ref.data(), m, n); print("\n\n");
 #endif
 # if 1
-  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
-#endif
   std::cout << "Success!" << std::endl;
+#endif
   return 0;
 }

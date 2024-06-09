@@ -118,6 +118,8 @@ int main() {
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
+#if 1
+  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #if 0
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
@@ -125,7 +127,6 @@ int main() {
   print("h_C_ref : "); printMatrix(h_C_ref.data(), m, n); print("\n\n");
 #endif
 # if 1
-  matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
 #endif
   std::cout << "Success!" << std::endl;
