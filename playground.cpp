@@ -7,10 +7,6 @@
 
 #include <cute/tensor.hpp>
 
-#include "cutlass/util/print_error.hpp"
-#include "cutlass/util/GPU_Clock.hpp"
-#include "cutlass/util/helper_cuda.hpp"
-
 #include <iostream>
 
 int f()
@@ -207,7 +203,7 @@ int h13() {
 int main() {
   using namespace cute;
 
-  using my_op = SM80_16x8x16_F16F16F16F16_TN;
+  using my_op = SM80_16x8x8_F16F16F16F16_TN;
   auto my_mma = make_tiled_mma(my_op{}, make_layout(make_shape(_1{}, _1{}, _1{})));
 
   print_latex(my_mma); print("\n");
