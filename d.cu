@@ -35,13 +35,18 @@ void
 f(cute::half_t const *A,
   cute::half_t const *B,
   cute::half_t       *C,
+  int k1,
   TiledMma            my_mma) {
   using namespace cute;
 
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_8{}, _16{}), make_stride(_16{}, _1{})));
+  int k = k1 * 16;
+
+  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, k), make_stride(k, _1{})));
+  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_8{}, k), make_stride(k, _1{})));
   Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(_16{}, _8{}), make_stride(_8{}, _1{})));
   auto thrmma = my_mma.get_slice(threadIdx.x);
+
+  // No need for gA, gB, or gC...only one CTA
 
   auto rC = thrmma.partition_fragment_C(mC);
   clear(rC);
@@ -66,6 +71,7 @@ f(cute::half_t const *A,
 #endif
 
 #if 1
+  // insert loop for p1 in k1
   copy(tCmA, rA);
   copy(tCmB, rB);
   gemm(my_mma, rA, rB, rC);
@@ -118,7 +124,7 @@ int main() {
   dim3 dimGrid(1);
   dim3 dimBlock(32);
   
-  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
+  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), k1, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
 #if 1
