@@ -207,7 +207,7 @@ tCgC : gmem_ptr[32b](0x7f7362000000) o (_8,_8):(_16,81920)
 tCrC : ptr[32b](0x7f73bafffbe0) o (_8,_8):(_1,_8)
 */
 
-#if 0
+#if 1
 
   // TUTORIAL: Example of a simple mainloop that read tiles of data into shared memory,
   //           and then computes on those tiles.
