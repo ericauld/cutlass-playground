@@ -80,15 +80,17 @@ f(cute::half_t const *A,
   }
 #endif
 /*
-mA : gmem_ptr[16b](0x7ff473c00000) o (_16,112):(112,_1)
-mB : gmem_ptr[16b](0x7ff473c00e00) o (_8,112):(112,_1)
-mC : gmem_ptr[16b](0x7ff473c01600) o (_16,_8):(_8,_1)
-rA : ptr[16b](0x7ff49efffcc0) o ((_2,_2,_2),_1,_1,_1):((_0,_1,_0),_0,_0,_0)
-rB : ptr[16b](0x7ff49efffcd0) o ((_2,_2),_1,_1,_1):((_0,_0),_0,_0,_0)
-rC : ptr[16b](0x7ff49efffcb0) o ((_2,_2),_1,_1,_1):((_1,_2),_0,_0,_0)
-tCgA : gmem_ptr[16b](0x7ff473c00000) o ((_2,_2,_2),_1,_1,7):((_1,896,_8),_0,_0,_16)
-tCgB : gmem_ptr[16b](0x7ff473c00e00) o ((_2,_2),_1,_1,7):((_1,_8),_0,_0,_16)
-tCmC : gmem_ptr[16b](0x7ff473c01600) o ((_2,_2),_1,_1):((_1,_64),_0,_0)
+mA : gmem_ptr[16b](0x7fac1fc00000) o (_16,112):(112,_1)
+mB : gmem_ptr[16b](0x7fac1fc00e00) o (_8,112):(112,_1)
+mC : gmem_ptr[16b](0x7fac1fc01600) o (_16,_8):(_8,_1)
+gA : gmem_ptr[16b](0x7fac1fc00000) o (_16,_16,7):(112,_1,_16)
+gB : gmem_ptr[16b](0x7fac1fc00e00) o (_8,_16,7):(112,_1,_16)
+rA : ptr[16b](0x7fac43fffcc0) o ((_2,_2,_2),_1,_1,_1):((_0,_1,_0),_0,_0,_0)
+rB : ptr[16b](0x7fac43fffcd0) o ((_2,_2),_1,_1,_1):((_0,_0),_0,_0,_0)
+rC : ptr[16b](0x7fac43fffcb0) o ((_2,_2),_1,_1,_1):((_1,_2),_0,_0,_0)
+tCgA : gmem_ptr[16b](0x7fac1fc00000) o ((_2,_2,_2),_1,_1,7):((_1,896,_8),_0,_0,_16)
+tCgB : gmem_ptr[16b](0x7fac1fc00e00) o ((_2,_2),_1,_1,7):((_1,_8),_0,_0,_16)
+tCmC : gmem_ptr[16b](0x7fac1fc01600) o ((_2,_2),_1,_1):((_1,_64),_0,_0)
 */
 #if 0
   for (int p1 = 0; p1 < k1; ++p1) {
@@ -148,7 +150,7 @@ int main() {
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), k1, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
-#if 1
+#if 0
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #endif
 #if 0
