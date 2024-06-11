@@ -60,7 +60,7 @@ f(cute::half_t const *A,
 
   auto rC = thrmma.partition_fragment_C(mC);
   clear(rC);
-#if 1
+#if 0
   if (thread0()) {
     print("mA : "); print(mA); print("\n");
     print("mB : "); print(mB); print("\n");
@@ -88,8 +88,8 @@ Next line fails with
 static_assert(is_static<Layout>::value, "Dynamic owning tensors not supported");
 */
 #if 1
-  auto rA = thrmma.partition_fragment_A(gA);
-  auto rB = thrmma.partition_fragment_B(gB);
+  auto rA = thrmma.partition_fragment_A(gA(_, _, 0));
+  auto rB = thrmma.partition_fragment_B(gB(_, _, 0));
 #endif
 #if 0
   if (thread0()) {
@@ -104,7 +104,7 @@ static_assert(is_static<Layout>::value, "Dynamic owning tensors not supported");
     print("tCmC : "); print(tCmC); print("\n");
   }
 #endif
-#if 0
+#if 1
   for (int p1 = 0; p1 < k1; ++p1) {
     copy(tCgA, rA);
     copy(tCgB, rB);
@@ -162,16 +162,16 @@ int main() {
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), k1, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
-#if 0
+#if 1
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #endif
-#if 0
+#if 1
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
-  print("h_C_ref : "); printMatrix(h_C_ref.data(), m, n); print("\n\n");
+  print("cute_result : "); printMatrix(cute_result.data(), m, n); print("\n\n");
 #endif
-# if 0
+# if 1
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
   std::cout << "Success!" << std::endl;
 #endif
