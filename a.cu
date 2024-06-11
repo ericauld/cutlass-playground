@@ -120,6 +120,7 @@ int main() {
   thrust::host_vector<TA> cute_result = d_C;
 #if 1
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
+#endif
 #if 0
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
