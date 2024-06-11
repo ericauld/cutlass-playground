@@ -60,42 +60,52 @@ f(cute::half_t const *A,
 
   auto rC = thrmma.partition_fragment_C(tCmC);
   clear(rC);
-#if 1
+
   auto rA = thrmma.partition_fragment_A(tCgA(_, _, _, 0));
   auto rB = thrmma.partition_fragment_B(tCgB(_, _, _, 0));
-#endif
+
 #if 1
   if (thread0()) {
+    print(my_mma);
     print("mA : "); print(mA); print("\n");
     print("mB : "); print(mB); print("\n");
     print("mC : "); print(mC); print("\n");
     print("gA : "); print(gA); print("\n");
     print("gB : "); print(gB); print("\n");
-    print("rA : "); print(rA); print("\n");
-    print("rB : "); print(rB); print("\n");
-    print("rC : "); print(rC); print("\n");
     print("tCgA : "); print(tCgA); print("\n");
     print("tCgB : "); print(tCgB); print("\n");
     print("tCmC : "); print(tCmC); print("\n");
+    print("rA : "); print(rA); print("\n");
+    print("rB : "); print(rB); print("\n");
+    print("rC : "); print(rC); print("\n");
   }
 #endif
 /*
-mA : gmem_ptr[16b](0x7fac1fc00000) o (_16,112):(112,_1)
-mB : gmem_ptr[16b](0x7fac1fc00e00) o (_8,112):(112,_1)
-mC : gmem_ptr[16b](0x7fac1fc01600) o (_16,_8):(_8,_1)
-gA : gmem_ptr[16b](0x7fac1fc00000) o (_16,_16,7):(112,_1,_16)
-gB : gmem_ptr[16b](0x7fac1fc00e00) o (_8,_16,7):(112,_1,_16)
-rA : ptr[16b](0x7fac43fffcc0) o ((_2,_2,_2),_1,_1,_1):((_0,_1,_0),_0,_0,_0)
-rB : ptr[16b](0x7fac43fffcd0) o ((_2,_2),_1,_1,_1):((_0,_0),_0,_0,_0)
-rC : ptr[16b](0x7fac43fffcb0) o ((_2,_2),_1,_1,_1):((_1,_2),_0,_0,_0)
-tCgA : gmem_ptr[16b](0x7fac1fc00000) o ((_2,_2,_2),_1,_1,7):((_1,896,_8),_0,_0,_16)
-tCgB : gmem_ptr[16b](0x7fac1fc00e00) o ((_2,_2),_1,_1,7):((_1,_8),_0,_0,_16)
-tCmC : gmem_ptr[16b](0x7fac1fc01600) o ((_2,_2),_1,_1):((_1,_64),_0,_0)
+TiledMMA
+  ThrLayoutVMNK:  (_32,_1,_1,_1):(_1,_0,_0,_0)
+  PermutationMNK: (_,_,_)
+MMA_Atom
+  ThrID:      _32:_1
+  Shape_MNK:  (_16,_8,_16)
+  LayoutA_TV: ((_4,_8),(_2,_2,_2)):((_32,_1),(_16,_8,_128))
+  LayoutB_TV: ((_4,_8),(_2,_2)):((_16,_1),(_8,_64))
+  LayoutC_TV: ((_4,_8),(_2,_2)):((_32,_1),(_16,_8))
+mA : gmem_ptr[16b](0x7f5d5bc00000) o (_16,112):(112,_1)
+mB : gmem_ptr[16b](0x7f5d5bc00e00) o (_8,112):(112,_1)
+mC : gmem_ptr[16b](0x7f5d5bc01600) o (_16,_8):(_8,_1)
+gA : gmem_ptr[16b](0x7f5d5bc00000) o (_16,_16,7):(112,_1,_16)
+gB : gmem_ptr[16b](0x7f5d5bc00e00) o (_8,_16,7):(112,_1,_16)
+tCgA : gmem_ptr[16b](0x7f5d5bc00000) o ((_2,_2,_2),_1,_1,7):((_1,896,_8),_0,_0,_16)
+tCgB : gmem_ptr[16b](0x7f5d5bc00e00) o ((_2,_2),_1,_1,7):((_1,_8),_0,_0,_16)
+tCmC : gmem_ptr[16b](0x7f5d5bc01600) o ((_2,_2),_1,_1):((_1,_64),_0,_0)
+rA : ptr[16b](0x7f5d80fffcc0) o ((_2,_2,_2),_1,_1,_1):((_0,_1,_0),_0,_0,_0)
+rB : ptr[16b](0x7f5d80fffcd0) o ((_2,_2),_1,_1,_1):((_0,_0),_0,_0,_0)
+rC : ptr[16b](0x7f5d80fffcb0) o ((_2,_2),_1,_1,_1):((_1,_2),_0,_0,_0)
 */
 #if 0
   for (int p1 = 0; p1 < k1; ++p1) {
-    copy(tCgA(_, _, _, 0), rA);
-    copy(tCgB(_, _, _, 0), rB);
+    copy(tCgA(_, _, _, p1), rA);
+    copy(tCgB(_, _, _, p1), rB);
     gemm(my_mma, rA, rB, rC);
   }
   copy(rC, tCmC);
