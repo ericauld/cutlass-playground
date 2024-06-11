@@ -69,6 +69,8 @@ f(cute::half_t const *A,
     print("mA : "); print(mA); print("\n");
     print("mB : "); print(mB); print("\n");
     print("mC : "); print(mC); print("\n");
+    print("gA : "); print(gA); print("\n");
+    print("gB : "); print(gB); print("\n");
     print("rA : "); print(rA); print("\n");
     print("rB : "); print(rB); print("\n");
     print("rC : "); print(rC); print("\n");
