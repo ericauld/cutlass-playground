@@ -228,7 +228,7 @@ tCrA : ptr[32b](0x7f35bffff980) o (_1,_8,_8):(_0,_1,_8)
 tCrB : ptr[32b](0x7f35bffffa80) o (_1,_8,_8):(_0,_1,_8)
 tCrC : ptr[32b](0x7f35bffffb80) o (_1,_8,_8):(_0,_1,_8)
 */
-#if 0
+#if 1
 
   // Current pipe index in smem to read from
   int smem_pipe_read  = 0;
