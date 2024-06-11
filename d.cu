@@ -48,14 +48,49 @@ f(cute::half_t const *A,
 
   // No need for gA, gB, or gC...only one CTA
 
+  // Our single CTA has blockIdx.x = 0, blockIdx.y = 0
+  auto cta_coord = make_coord(0, 0, _);
+  auto cta_tiler = make_shape(_16{}, _8{}, _16{});
+  Tensor gA = local_tile(mA, cta_tiler, cta_coord, Step<_1, X, _1>{});
+  Tensor gB = local_tile(mB, cta_tiler, cta_coord, Step<X, _1, _1>{});
+
+  Tensor tCgA = thrmma.partition_A(gA);
+  Tensor tCgB = thrmma.partition_B(gB);
+  Tensor tCmC = thrmma.partition_C(mC);
+
   auto rC = thrmma.partition_fragment_C(mC);
   clear(rC);
-  auto rA = thrmma.partition_fragment_A(mA);
-  auto rB = thrmma.partition_fragment_B(mB);
-  auto tCmC = thrmma.partition_C(mC);
-  auto tCmA = thrmma.partition_A(mA);
-  auto tCmB = thrmma.partition_B(mB);
+#if 1
+  if (thread0()) {
+    print("mA : "); print(mA); print("\n");
+    print("mB : "); print(mB); print("\n");
+    print("mC : "); print(mC); print("\n");
+    print("gA : "); print(gA); print("\n");
+    print("gB : "); print(gB); print("\n");
+    print("rC : "); print(rC); print("\n");
+    print("tCgA : "); print(tCgA); print("\n");
+    print("tCgB : "); print(tCgB); print("\n");
+    print("tCmC : "); print(tCmC); print("\n");
+  }
+#endif
+/*
+mA : gmem_ptr[16b](0x7f3f23c00000) o (_16,112):(112,_1)
+mB : gmem_ptr[16b](0x7f3f23c00e00) o (_8,112):(112,_1)
+mC : gmem_ptr[16b](0x7f3f23c01600) o (_16,_8):(_8,_1)
+gA : gmem_ptr[16b](0x7f3f23c00000) o (_16,_16,7):(112,_1,_16)
+gB : gmem_ptr[16b](0x7f3f23c00e00) o (_8,_16,7):(112,_1,_16)
+rC : ptr[16b](0x7f3f4bfffcd0) o ((_2,_2),_1,_1):((_1,_2),_0,_0)
+tCgA : gmem_ptr[16b](0x7f3f23c00000) o ((_2,_2,_2),_1,_1,7):((_1,896,_8),_0,_0,_16)
+tCgB : gmem_ptr[16b](0x7f3f23c00e00) o ((_2,_2),_1,_1,7):((_1,_8),_0,_0,_16)
+tCmC : gmem_ptr[16b](0x7f3f23c01600) o ((_2,_2),_1,_1):((_1,_64),_0,_0)
 
+Next line fails with
+static_assert(is_static<Layout>::value, "Dynamic owning tensors not supported");
+*/
+#if 1
+  auto rA = thrmma.partition_fragment_A(gA);
+  auto rB = thrmma.partition_fragment_B(gB);
+#endif
 #if 0
   if (thread0()) {
     print("mA : "); print(mA); print("\n");
@@ -69,12 +104,12 @@ f(cute::half_t const *A,
     print("tCmC : "); print(tCmC); print("\n");
   }
 #endif
-
-#if 1
-  // insert loop for p1 in k1
-  copy(tCmA, rA);
-  copy(tCmB, rB);
-  gemm(my_mma, rA, rB, rC);
+#if 0
+  for (int p1 = 0; p1 < k1; ++p1) {
+    copy(tCgA, rA);
+    copy(tCgB, rB);
+    gemm(my_mma, rA, rB, rC);
+  }
   copy(rC, tCmC);
 #endif
   return;
@@ -127,15 +162,16 @@ int main() {
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), k1, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
-#if 1
+#if 0
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
+#endif
 #if 0
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
   print("h_C_ref : "); printMatrix(h_C_ref.data(), m, n); print("\n\n");
 #endif
-# if 1
+# if 0
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
   std::cout << "Success!" << std::endl;
 #endif
