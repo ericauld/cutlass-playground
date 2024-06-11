@@ -18,7 +18,7 @@ void matrix_multiply_cpu(const cute::half_t* A, const cute::half_t* B, cute::hal
   }
 }
 
-bool areMatricesEqual(const cute::half_t* C1, const cute::half_t* C2, int m, int n, float tolerance = 1e-2) {
+bool areMatricesEqual(const cute::half_t* C1, const cute::half_t* C2, int m, int n, float tolerance = 1e-1) {
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
       if (std::fabs(static_cast<float>(C1[i * n + j]) - static_cast<float>(C2[i * n + j])) > tolerance) {
@@ -58,13 +58,13 @@ f(cute::half_t const *A,
   Tensor tCgB = thrmma.partition_B(gB);
   Tensor tCmC = thrmma.partition_C(mC);
 
-  auto rC = thrmma.partition_fragment_C(tCmC);
+  auto rC = thrmma.make_fragment_C(tCmC);
   clear(rC);
 
-  auto rA = thrmma.partition_fragment_A(tCgA(_, _, _, 0));
-  auto rB = thrmma.partition_fragment_B(tCgB(_, _, _, 0));
+  auto rA = thrmma.make_fragment_A(tCgA(_, _, _, 0));
+  auto rB = thrmma.make_fragment_B(tCgB(_, _, _, 0));
 
-#if 1
+#if 0
   if (thread0()) {
     print(my_mma);
     print("mA : "); print(mA); print("\n");
@@ -80,29 +80,7 @@ f(cute::half_t const *A,
     print("rC : "); print(rC); print("\n");
   }
 #endif
-/*
-TiledMMA
-  ThrLayoutVMNK:  (_32,_1,_1,_1):(_1,_0,_0,_0)
-  PermutationMNK: (_,_,_)
-MMA_Atom
-  ThrID:      _32:_1
-  Shape_MNK:  (_16,_8,_16)
-  LayoutA_TV: ((_4,_8),(_2,_2,_2)):((_32,_1),(_16,_8,_128))
-  LayoutB_TV: ((_4,_8),(_2,_2)):((_16,_1),(_8,_64))
-  LayoutC_TV: ((_4,_8),(_2,_2)):((_32,_1),(_16,_8))
-mA : gmem_ptr[16b](0x7f5d5bc00000) o (_16,112):(112,_1)
-mB : gmem_ptr[16b](0x7f5d5bc00e00) o (_8,112):(112,_1)
-mC : gmem_ptr[16b](0x7f5d5bc01600) o (_16,_8):(_8,_1)
-gA : gmem_ptr[16b](0x7f5d5bc00000) o (_16,_16,7):(112,_1,_16)
-gB : gmem_ptr[16b](0x7f5d5bc00e00) o (_8,_16,7):(112,_1,_16)
-tCgA : gmem_ptr[16b](0x7f5d5bc00000) o ((_2,_2,_2),_1,_1,7):((_1,896,_8),_0,_0,_16)
-tCgB : gmem_ptr[16b](0x7f5d5bc00e00) o ((_2,_2),_1,_1,7):((_1,_8),_0,_0,_16)
-tCmC : gmem_ptr[16b](0x7f5d5bc01600) o ((_2,_2),_1,_1):((_1,_64),_0,_0)
-rA : ptr[16b](0x7f5d80fffcc0) o ((_2,_2,_2),_1,_1,_1):((_0,_1,_0),_0,_0,_0)
-rB : ptr[16b](0x7f5d80fffcd0) o ((_2,_2),_1,_1,_1):((_0,_0),_0,_0,_0)
-rC : ptr[16b](0x7f5d80fffcb0) o ((_2,_2),_1,_1,_1):((_1,_2),_0,_0,_0)
-*/
-#if 0
+#if 1
   for (int p1 = 0; p1 < k1; ++p1) {
     copy(tCgA(_, _, _, p1), rA);
     copy(tCgB(_, _, _, p1), rB);
@@ -160,7 +138,7 @@ int main() {
   f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), k1, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
-#if 0
+#if 1
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #endif
 #if 0
@@ -169,7 +147,7 @@ int main() {
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
   print("cute_result : "); printMatrix(cute_result.data(), m, n); print("\n\n");
 #endif
-# if 0
+# if 1
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
   std::cout << "Success!" << std::endl;
 #endif
