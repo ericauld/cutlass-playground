@@ -18,7 +18,7 @@ void matrix_multiply_cpu(const cute::half_t* A, const cute::half_t* B, cute::hal
   }
 }
 
-bool areMatricesEqual(const cute::half_t* C1, const cute::half_t* C2, int m, int n, float tolerance = 1e-2) {
+bool areMatricesEqual(const cute::half_t* C1, const cute::half_t* C2, int m, int n, float tolerance = 1e-2f) {
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
       if (std::fabs(static_cast<float>(C1[i * n + j]) - static_cast<float>(C2[i * n + j])) > tolerance) {

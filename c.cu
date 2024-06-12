@@ -18,7 +18,7 @@ void matrix_multiply_cpu(const cute::half_t* A, const cute::half_t* B, cute::hal
   }
 }
 
-bool areMatricesEqual(const cute::half_t* C1, const cute::half_t* C2, int m, int n, float tolerance = 1e-2) {
+bool areMatricesEqual(const cute::half_t* C1, const cute::half_t* C2, int m, int n, float tolerance = 1e-2f) {
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
       if (std::fabs(static_cast<float>(C1[i * n + j]) - static_cast<float>(C2[i * n + j])) > tolerance) {
@@ -99,15 +99,14 @@ void printMatrix(const cute::half_t* data, int m, int n) {
 int main() {
   using namespace cute;
 
-  int Am = 16;
-  int An = 8;
-  int Ak = 16;
+  int Xm = 16;
+  int Xn = 8;
+  int Xk = 16;
   int m1 = 5;
   int n1 = 6;
-  int k1 = 1;
-  int m = Am * m1;
-  int n = An * n1;
-  int k = Ak * k1;
+  int m = Xm * m1;
+  int n = Xn * n1;
+  int k = Xk;
 
   using TA = half_t;
 
