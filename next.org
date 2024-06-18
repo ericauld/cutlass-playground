@@ -1,5 +1,9 @@
 - Learning to drive CuBLAS is now a first-class goal
 
+- How in fact does `TiledMMA` arrange for the new regiments to get
+  "canceled" when an existing regiments already carries the necessary
+  data?
+
 - I feel like your post rn punts on the question of “what should the
   kernel itself be responsible for and what should its caller”? Like
   you should face head-on in your post the question of “can the kernel
@@ -12,11 +16,11 @@
 - …and see what numbers you get compared to the ones you make from the
   template args (getting better at both ncu and cutlass 2.0)
 
-- You should just have the kernels. Tests separately invoke, test
+- Just have the kernels. Tests separately invoke, test
 
-- You need to more directly understand:
-    - “Causal”
-    - “Masking”
+- I want to more directly understand:
+  - “Causal”
+  - “Masking”
 
 - Rebase it now
 
