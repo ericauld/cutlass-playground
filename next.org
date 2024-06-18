@@ -1,0 +1,12 @@
+
+
+- Do some matmuls with hand-rolled kernels in CuTe and see what
+  numbers you get compared to the ones you make from the template args
+  (getting better at both ncu and cutlass 2.0)
+
+- Hack together the blog post, publish it
+
+- Maybe *separately* make tests for matmuls to test against cpu, to
+  separate test logic from code
+
+- retile_D, what is that?
