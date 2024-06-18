@@ -1,4 +1,7 @@
 
+- Rebase it now
+
+- Put stuff about copies in the blog post
 
 - Do some matmuls with hand-rolled kernels in CuTe and see what
   numbers you get compared to the ones you make from the template args
