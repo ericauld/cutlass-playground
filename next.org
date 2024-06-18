@@ -1,15 +1,26 @@
-- Maybe *separately* make tests for matmuls to test against cpu, to
-  separate test logic from code
+- Learning to drive CuBLAS is now a first-class goal
+
+- I feel like your post rn punts on the question of “what should the
+  kernel itself be responsible for and what should its caller”? Like
+  you should face head-on in your post the question of “can the kernel
+  just get passed all the necessary layouts?”
+
+- Do some matmuls with…
+  - Your kernels
+  - Cutlass-w-template kernels
+  - CuBLAS
+- …and see what numbers you get compared to the ones you make from the
+  template args (getting better at both ncu and cutlass 2.0)
+
+- You should just have the kernels. Tests separately invoke, test
+
+- You need to more directly understand:
+    - “Causal”
+    - “Masking”
 
 - Rebase it now
 
-- Put stuff about copies in the blog post
+- Add stuff about copies
 
 - Your post (maybe moreso the accompanying video) should dive deeper
   into the FA2 repo, talk about what it's doing and why
-
-- Do some matmuls with hand-rolled kernels in CuTe and see what
-  numbers you get compared to the ones you make from the template args
-  (getting better at both ncu and cutlass 2.0)
-
-- Hack together the blog post, publish it
