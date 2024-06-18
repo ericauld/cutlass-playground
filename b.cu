@@ -91,9 +91,15 @@ void printMatrix(const cute::half_t* data, int m, int n) {
 int main() {
   using namespace cute;
 
-  int m = 32;
-  int n = 16;
-  int k = 16;
+  int Xm = 16;
+  int Xn = 8;
+  int Xk = 16;
+  int Tm = 2;
+  int Tn = 2;
+  
+  int m = Xm * Tm;
+  int n = Xn * Tn;
+  int k = Xk;
 
   using TA = half_t;
 

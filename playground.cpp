@@ -203,8 +203,8 @@ int h13() {
 int main() {
   using namespace cute;
 
-  using my_op = SM80_16x8x8_F16F16F16F16_TN;
-  auto my_mma = make_tiled_mma(my_op{}, make_layout(make_shape(_1{}, _1{}, _1{})));
+  using my_op = SM80_16x8x16_F16F16F16F16_TN;
+  auto my_mma = make_tiled_mma(my_op{}, make_layout(make_shape(_1{}, _2{}, _1{})));
 
   print_latex(my_mma); print("\n");
   return 0;
