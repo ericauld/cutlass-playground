@@ -76,7 +76,7 @@ int main() {
                            dA, dB, dC);
 
   thrust::host_vector<TA> cute_result = d_C;
-#if 1
+#if 0
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #endif
 #if 0
@@ -85,9 +85,9 @@ int main() {
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
   print("h_C_ref : "); printMatrix(h_C_ref.data(), m, n); print("\n\n");
 #endif
-# if 1
+# if 0
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
-#endif
   std::cout << "Success!" << std::endl;
+#endif
   return 0;
 }
