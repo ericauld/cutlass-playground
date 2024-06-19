@@ -5,6 +5,7 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <cute/tensor.hpp>
+#include "e.h"
 
 void matrix_multiply_cpu(const cute::half_t* A, const cute::half_t* B, cute::half_t* C, int m, int n, int k) {
   for (int i = 0; i < m; ++i) {
@@ -27,54 +28,6 @@ bool areMatricesEqual(const cute::half_t* C1, const cute::half_t* C2, int m, int
     }
   }
   return true;
-}
-
-template <class TiledMma>
-__global__ static
-void
-f(cute::half_t const *A,
-  cute::half_t const *B,
-  cute::half_t       *C,
-  TiledMma            my_mma) {
-  using namespace cute;
-
-  // mA is k-major, i.e. "row major" i.e. "not transposed"
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(_16{}, _16{}), make_stride(_16{}, _1{})));
-  // mB is k-major, i.e. "column major" i.e. "transposed"
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(_8{}, _16{}), make_stride(_16{}, _1{})));
-  // mC is n-major, i.e. "row major"
-  Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(_16{}, _8{}), make_stride(_8{}, _1{})));
-  auto thrmma = my_mma.get_slice(threadIdx.x);
-
-  auto rC = thrmma.partition_fragment_C(mC);
-  clear(rC);
-  auto rA = thrmma.partition_fragment_A(mA);
-  auto rB = thrmma.partition_fragment_B(mB);
-  auto tCmC = thrmma.partition_C(mC);
-  auto tCmA = thrmma.partition_A(mA);
-  auto tCmB = thrmma.partition_B(mB);
-
-#if 0
-  if (thread0()) {
-    print("mA : "); print(mA); print("\n");
-    print("mB : "); print(mB); print("\n");
-    print("mC : "); print(mC); print("\n");
-    print("rA : "); print(rA); print("\n");
-    print("rB : "); print(rB); print("\n");
-    print("rC : "); print(rC); print("\n");
-    print("tCmA : "); print(tCmA); print("\n");
-    print("tCmB : "); print(tCmB); print("\n");
-    print("tCmC : "); print(tCmC); print("\n");
-  }
-#endif
-
-#if 1
-  copy(tCmA, rA);
-  copy(tCmB, rB);
-  gemm(my_mma, rA, rB, rC);
-  copy(rC, tCmC);
-#endif
-  return;
 }
 
 void printMatrix(const cute::half_t* data, int m, int n) {
@@ -115,7 +68,12 @@ int main() {
   dim3 dimGrid(1);
   dim3 dimBlock(32);
   
-  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), tiled_mma);
+  auto shape = make_shape(m, n, k);
+  auto dA = make_stride(k, _1{});
+  auto dB = make_stride(k, _1{});
+  auto dC = make_stride(n, _1{});
+  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), shape, tiled_mma,
+                           dA, dB, dC);
 
   thrust::host_vector<TA> cute_result = d_C;
 #if 1

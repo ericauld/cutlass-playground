@@ -1,12 +1,15 @@
 #include <cute/tensor.hpp>
 
-template <class TiledMma>
+template <class TiledMma, class ProblemShape,
+          class AStride, class BStride, class CStride>
 __global__ static
 void
 f(cute::half_t const *A,
   cute::half_t const *B,
   cute::half_t       *C,
-  TiledMma            my_mma) {
+  ProblemShape problem_shape,
+  TiledMma            my_mma,
+  AStride dA, BStride dB, CStride dC) {
 
   using namespace cute;
   // mA is k-major, i.e. "row major" i.e. "not transposed"
