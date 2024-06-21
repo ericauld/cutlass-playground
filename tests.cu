@@ -127,7 +127,7 @@ void second_simplest() {
   using op = SM80_16x8x16_F16F16F16F16_TN;
   auto tiled_mma = make_tiled_mma(op{}, make_layout(make_shape(_1{}, _1{}, _1{}))); 
 
-  dim3 dimGrid(1, 1);
+  dim3 dimGrid(Tm, Tn);
   dim3 dimBlock(32);
   
   auto shape = make_shape(m, n, k);
