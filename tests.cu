@@ -189,7 +189,7 @@ int main() {
   dim3 dimGrid(1);
   dim3 dimBlock(32);
   
-  f_local<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), k1, tiled_mma);
+  blocked_inner_product<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), k1, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
 #if 1

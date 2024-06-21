@@ -10,6 +10,14 @@ block_outer_product(cute::half_t const *A,
                     TiledMma            my_mma) {
   using namespace cute;
 
+#if 0
+  if (thread0()) {
+    print("my_mma.tile_size_mnk<0>() : "); print(my_mma.template tile_size_mnk<0>()); print("\n");
+    print("my_mma.tile_size_mnk<1>() : "); print(my_mma.template tile_size_mnk<1>()); print("\n");
+    print("my_mma.tile_size_mnk<2>() : "); print(my_mma.template tile_size_mnk<2>()); print("\n");
+  }
+#endif
+
   Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(m, _16{}), make_stride(_16{}, _1{})));
   Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(n, _16{}), make_stride(_16{}, _1{})));
   Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(m, n), make_stride(n, _1{})));
@@ -42,7 +50,7 @@ block_outer_product(cute::half_t const *A,
 template <class TiledMma>
 __global__ static
 void
-f_local(cute::half_t const *A,
+blocked_inner_product(cute::half_t const *A,
   cute::half_t const *B,
   cute::half_t       *C,
   int k1,
