@@ -78,7 +78,7 @@ void simplest() {
   auto dA = make_stride(k, _1{});
   auto dB = make_stride(k, _1{});
   auto dC = make_stride(n, _1{});
-  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), m, n, tiled_mma);
+  block_outer_product<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), m, n, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
 #if 1
@@ -134,7 +134,7 @@ void second_simplest() {
   auto dA = make_stride(k, _1{});
   auto dB = make_stride(k, _1{});
   auto dC = make_stride(n, _1{});
-  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), m, n, tiled_mma);
+  block_outer_product<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), m, n, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
 #if 1

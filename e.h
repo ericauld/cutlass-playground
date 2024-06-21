@@ -3,11 +3,11 @@
 template <class TiledMma>
 __global__ static
 void
-f(cute::half_t const *A,
-  cute::half_t const *B,
-  cute::half_t       *C,
-  int m, int n,
-  TiledMma            my_mma) {
+block_outer_product(cute::half_t const *A,
+                    cute::half_t const *B,
+                    cute::half_t       *C,
+                    int m, int n,
+                    TiledMma            my_mma) {
   using namespace cute;
 
   Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(m, _16{}), make_stride(_16{}, _1{})));
@@ -27,10 +27,10 @@ f(cute::half_t const *A,
   auto tCgB = thrmma.partition_B(gB);
   auto tCgC = thrmma.partition_C(gC);
 
-  auto rC = thrmma.make_fragment_C(tCgC); 
-  clear(rC);
   auto rA = thrmma.make_fragment_A(tCgA);
   auto rB = thrmma.make_fragment_B(tCgB);
+  auto rC = thrmma.make_fragment_C(tCgC); 
+  clear(rC);
 
   copy(tCgA, rA);
   copy(tCgB, rB);
