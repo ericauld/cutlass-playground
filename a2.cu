@@ -5,7 +5,7 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <cute/tensor.hpp>
-#include "e2.h"
+#include "e.h"
 
 void matrix_multiply_cpu(const cute::half_t* A, const cute::half_t* B, cute::half_t* C, int m, int n, int k) {
   for (int i = 0; i < m; ++i) {
@@ -44,15 +44,9 @@ void printMatrix(const cute::half_t* data, int m, int n) {
 int main() {
   using namespace cute;
 
-  int Xm = 16;
-  int Xn = 8;
-  int Xk = 16;
-  int Tm = 1;
-  int Tn = 1;
-  int Tk = 1;
-  int m = Xm * Tm;
-  int n = Xn * Tn;
-  int k = Xk * Tk;
+  int m = 16;
+  int n = 8;
+  int k = 16;
 
   using TA = half_t;
 
@@ -84,7 +78,7 @@ int main() {
 #if 1
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #endif
-#if 0
+#if 1
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
