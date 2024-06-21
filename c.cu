@@ -51,37 +51,19 @@ f(cute::half_t const *A,
   Tensor gB = local_tile(mB, cta_tiler, cta_coord, Step<X, _1, _1>{});
   Tensor gC = local_tile(mC, cta_tiler, cta_coord, Step<_1, _1, X>{});
 
-  Tensor tCgC = thrmma.partition_C(gC);
-
-  auto rC = thrmma.partition_fragment_C(gC);
-  clear(rC);
-  auto rA = thrmma.partition_fragment_A(gA);
-  auto rB = thrmma.partition_fragment_B(gB);
   auto tCgA = thrmma.partition_A(gA);
   auto tCgB = thrmma.partition_B(gB);
+  auto tCgC = thrmma.partition_C(gC);
 
-#if 0
-  if (thread0()) {
-    print("mA : "); print(mA); print("\n");
-    print("mB : "); print(mB); print("\n");
-    print("mC : "); print(mC); print("\n");
-    print("gA : "); print(gA); print("\n");
-    print("gB : "); print(gB); print("\n");
-    print("gC : "); print(gC); print("\n");
-    print("rA : "); print(rA); print("\n");
-    print("rB : "); print(rB); print("\n");
-    print("rC : "); print(rC); print("\n");
-    print("tCgA : "); print(tCgA); print("\n");
-    print("tCgB : "); print(tCgB); print("\n");
-    print("tCgC : "); print(tCgC); print("\n");
-  }
-#endif
-#if 1
+  auto rC = thrmma.make_fragment_C(tCgC);
+  clear(rC);
+  auto rA = thrmma.make_fragment_A(tCgA);
+  auto rB = thrmma.make_fragment_B(tCgB);
+
   copy(tCgA, rA);
   copy(tCgB, rB);
   gemm(my_mma, rA, rB, rC);
   copy(rC, tCgC);
-#endif
   return;
 }
 
