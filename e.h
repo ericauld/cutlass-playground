@@ -10,6 +10,8 @@ block_outer_product(cute::half_t const *A,
                     TiledMma            my_mma) {
   using namespace cute;
 
+  // Assumes block outer product structure, i.e. k = Tk1
+
   auto Tm1 = my_mma.template tile_size_mnk<0>();
   auto Tn1 = my_mma.template tile_size_mnk<1>();
   auto Tk1 = my_mma.template tile_size_mnk<2>();
@@ -52,6 +54,12 @@ blocked_inner_product_tilek(cute::half_t const *A,
   int k1,
   TiledMma            my_mma) {
   using namespace cute;
+
+  // Assumes block inner product structure, i.e. m = Tm1, n = Tn1
+
+  auto Tm1 = my_mma.template tile_size_mnk<0>();
+  auto Tn1 = my_mma.template tile_size_mnk<1>();
+  auto Tk1 = my_mma.template tile_size_mnk<2>();
 
   int k = k1 * 16;
 
