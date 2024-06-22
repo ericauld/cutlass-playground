@@ -10,17 +10,17 @@ block_outer_product(cute::half_t const *A,
                     TiledMma            my_mma) {
   using namespace cute;
 
-  auto Am = my_mma.template tile_size_mnk<0>();
-  auto An = my_mma.template tile_size_mnk<1>();
-  auto Ak = my_mma.template tile_size_mnk<2>();
+  auto Tm1 = my_mma.template tile_size_mnk<0>();
+  auto Tn1 = my_mma.template tile_size_mnk<1>();
+  auto Tk1 = my_mma.template tile_size_mnk<2>();
 
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(m, Ak), make_stride(Ak, _1{})));
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(n, Ak), make_stride(Ak, _1{})));
+  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(m, Tk1), make_stride(Tk1, _1{})));
+  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(n, Tk1), make_stride(Tk1, _1{})));
   Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(m, n), make_stride(n, _1{})));
 
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
-  auto cta_tiler = make_shape(Am, An, Ak);
+  auto cta_tiler = make_shape(Tm1, Tn1, Tk1);
   auto cta_coord = make_coord(blockIdx.x, blockIdx.y, 0);
 
   Tensor gA = local_tile(mA, cta_tiler, cta_coord, Step<_1, X, _1>{});
@@ -46,7 +46,7 @@ block_outer_product(cute::half_t const *A,
 template <class TiledMma>
 __global__ static
 void
-blocked_inner_product(cute::half_t const *A,
+blocked_inner_product_tilek(cute::half_t const *A,
   cute::half_t const *B,
   cute::half_t       *C,
   int k1,
@@ -70,11 +70,10 @@ blocked_inner_product(cute::half_t const *A,
   Tensor tCgB = thrmma.partition_B(gB);
   Tensor tCmC = thrmma.partition_C(mC);
 
-  auto rC = thrmma.make_fragment_C(tCmC);
-  clear(rC);
-
   auto rA = thrmma.make_fragment_A(tCgA(_, _, _, 0));
   auto rB = thrmma.make_fragment_B(tCgB(_, _, _, 0));
+  auto rC = thrmma.make_fragment_C(tCmC);
+  clear(rC);
 
   for (int p1 = 0; p1 < k1; ++p1) {
     copy(tCgA(_, _, _, p1), rA);
