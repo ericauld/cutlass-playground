@@ -10,21 +10,17 @@ block_outer_product(cute::half_t const *A,
                     TiledMma            my_mma) {
   using namespace cute;
 
-#if 0
-  if (thread0()) {
-    print("my_mma.tile_size_mnk<0>() : "); print(my_mma.template tile_size_mnk<0>()); print("\n");
-    print("my_mma.tile_size_mnk<1>() : "); print(my_mma.template tile_size_mnk<1>()); print("\n");
-    print("my_mma.tile_size_mnk<2>() : "); print(my_mma.template tile_size_mnk<2>()); print("\n");
-  }
-#endif
+  auto Am = my_mma.template tile_size_mnk<0>();
+  auto An = my_mma.template tile_size_mnk<1>();
+  auto Ak = my_mma.template tile_size_mnk<2>();
 
-  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(m, _16{}), make_stride(_16{}, _1{})));
-  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(n, _16{}), make_stride(_16{}, _1{})));
+  Tensor mA = make_tensor(make_gmem_ptr(A), make_layout(make_shape(m, Ak), make_stride(Ak, _1{})));
+  Tensor mB = make_tensor(make_gmem_ptr(B), make_layout(make_shape(n, Ak), make_stride(Ak, _1{})));
   Tensor mC = make_tensor(make_gmem_ptr(C), make_layout(make_shape(m, n), make_stride(n, _1{})));
 
   auto thrmma = my_mma.get_slice(threadIdx.x);
 
-  auto cta_tiler = make_shape(_16{}, _8{}, _16{});
+  auto cta_tiler = make_shape(Am, An, Ak);
   auto cta_coord = make_coord(blockIdx.x, blockIdx.y, 0);
 
   Tensor gA = local_tile(mA, cta_tiler, cta_coord, Step<_1, X, _1>{});
