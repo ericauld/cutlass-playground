@@ -5,7 +5,7 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <cute/tensor.hpp>
-#include "e.h"
+#include "e2.h"
 
 void matrix_multiply_cpu(const cute::half_t* A, const cute::half_t* B, cute::half_t* C, int m, int n, int k) {
   for (int i = 0; i < m; ++i) {
@@ -44,9 +44,15 @@ void printMatrix(const cute::half_t* data, int m, int n) {
 int main() {
   using namespace cute;
 
-  int m = 16;
-  int n = 8;
-  int k = 16;
+  int Xm = 16;
+  int Xn = 8;
+  int Xk = 16;
+  int Tm = 1;
+  int Tn = 1;
+  int Tk = 1;
+  int m = Xm * Tm;
+  int n = Xn * Tn;
+  int k = Xk * Tk;
 
   using TA = half_t;
 
@@ -65,27 +71,26 @@ int main() {
   using op = SM80_16x8x16_F16F16F16F16_TN;
   auto tiled_mma = make_tiled_mma(op{}, make_layout(make_shape(_1{}, _1{}, _1{}))); 
 
-  dim3 dimGrid(1);
+  dim3 dimGrid(1, 1);
   dim3 dimBlock(32);
   
   auto shape = make_shape(m, n, k);
   auto dA = make_stride(k, _1{});
   auto dB = make_stride(k, _1{});
   auto dC = make_stride(n, _1{});
-  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), shape, tiled_mma,
-                           dA, dB, dC);
+  f<<<dimGrid, dimBlock>>>(d_A.data().get(), d_B.data().get(), d_C.data().get(), m, n, tiled_mma);
 
   thrust::host_vector<TA> cute_result = d_C;
-#if 0
+#if 1
   matrix_multiply_cpu(h_A.data(), h_B.data(), h_C.data(), m, n, k);
 #endif
 #if 0
   print("h_A : "); printMatrix(h_A.data(), m, k); print("\n\n");
   print("h_B : "); printMatrix(h_B.data(), k, n); print("\n\n");
   print("h_C : "); printMatrix(h_C.data(), m, n); print("\n\n");
-  print("h_C_ref : "); printMatrix(h_C_ref.data(), m, n); print("\n\n");
+  print("cute_result : "); printMatrix(cute_result.data(), m, n); print("\n\n");
 #endif
-# if 0
+# if 1
   assert(areMatricesEqual(cute_result.data(), h_C.data(), m, n));
   std::cout << "Success!" << std::endl;
 #endif
