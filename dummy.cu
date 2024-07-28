@@ -1,7 +1,11 @@
 #include <cuda/barrier>
+<<<<<<< HEAD
 #include <cuda/ptx>
 using barrier = cuda::barrier<cuda::thread_scope_block>;
 namespace ptx = cuda::ptx;
+=======
+using barrier = cuda::barrier<cuda::thread_scope_block>;
+>>>>>>> fd4a5eb8da940752060cc526f95ff00d6c6c7d53
 
 static constexpr size_t buf_len = 1024;
 __global__ void add_one_kernel(int* data, size_t offset)
@@ -16,7 +20,12 @@ __global__ void add_one_kernel(int* data, size_t offset)
   __shared__ barrier bar;
   if (threadIdx.x == 0) { 
     init(&bar, blockDim.x);                      // a)
+<<<<<<< HEAD
     ptx::fence_proxy_async(ptx::space_shared);   // b)
+=======
+    asm("fence.proxy.async.shared::cta;");
+    // ptx::fence_proxy_async(ptx::space_shared);   // b)
+>>>>>>> fd4a5eb8da940752060cc526f95ff00d6c6c7d53
   }
   __syncthreads();
 
@@ -43,12 +52,18 @@ __global__ void add_one_kernel(int* data, size_t offset)
   }
 
   // 5. Wait for shared memory writes to be visible to TMA engine.
+<<<<<<< HEAD
   ptx::fence_proxy_async(ptx::space_shared);   // b)
+=======
+  asm("fence.proxy.async.shared::cta;");
+  // ptx::fence_proxy_async(ptx::space_shared);   // b)
+>>>>>>> fd4a5eb8da940752060cc526f95ff00d6c6c7d53
   __syncthreads();
   // After syncthreads, writes by all threads are visible to TMA engine.
 
   // 6. Initiate TMA transfer to copy shared memory to global memory
   if (threadIdx.x == 0) {
+<<<<<<< HEAD
     ptx::cp_async_bulk(
         ptx::space_global,
         ptx::space_shared,
@@ -58,5 +73,25 @@ __global__ void add_one_kernel(int* data, size_t offset)
     ptx::cp_async_bulk_commit_group();
     // Wait for the group to have completed reading from shared memory.
     ptx::cp_async_bulk_wait_group_read(ptx::n32_t<0>());
+=======
+    // This comes from cute's `cast_smem_ptr_to_uint`
+    uint32_t smem_int_ptr = static_cast<uint32_t>(__cvta_generic_to_shared(smem_data));
+    asm volatile("cp.async.bulk.global.shared::cta.bulk_group [%0], [%1], %2;"
+       :: "l"(data + offset), "r"(smem_int_ptr), "n"(sizeof(smem_data))
+       );
+    /* ptx::cp_async_bulk(
+        ptx::space_global,
+        ptx::space_shared,
+        data + offset, smem_data, sizeof(smem_data)); */
+    // 7. Wait for TMA transfer to have finished reading shared memory.
+    // Create a "bulk async-group" out of the previous bulk copy operation.
+    asm("cp.async.bulk.commit_group;");
+    // ptx::cp_async_bulk_commit_group();
+
+    // Wait for the group to have completed reading from shared memory.
+    
+    asm("cp.async.bulk.wait_group.read 0;");
+    // ptx::cp_async_bulk_wait_group_read(ptx::n32_t<0>());
+>>>>>>> fd4a5eb8da940752060cc526f95ff00d6c6c7d53
   }
 }
