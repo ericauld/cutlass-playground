@@ -16,7 +16,7 @@
 // _ZZ14add_one_kernelPimE3bar has been demoted
 
 
-//cup/dummy.cu:5 __global__ void add_one_kernel(int* data, size_t offset)
+//dummy.cu:5 __global__ void add_one_kernel(int* data, size_t offset)
 .visible .entry _Z14add_one_kernelPim(
 	.param .u64 _Z14add_one_kernelPim_param_0,
 	.param .u64 _Z14add_one_kernelPim_param_1
@@ -251,6 +251,9 @@ $L__BB0_7:
 	@%p4 bra 	$L__BB0_14;
 	bra.uni 	$L__BB0_8;
 
+// EA: This should be the part that only thread 0 goes to. What's a little
+// surprising to me is that the other threads have gone to $L__BB0_8 and I'm not
+// seeing where they come together
 $L__BB0_14:
 	setp.lt.s32 	%p8, %r63, 16;
 	@%p8 bra 	$L__BB0_19;
