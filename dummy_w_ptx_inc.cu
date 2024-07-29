@@ -1,3 +1,7 @@
+#if defined(__CUDA_MINIMUM_ARCH__) && __CUDA_MINIMUM_ARCH__ < 900
+static_assert(false, "Device code is being compiled with older architectures that are incompatible with TMA.");
+#endif // __CUDA_MINIMUM_ARCH__
+
 #include <cuda/barrier>
 #include <cuda/ptx>
 using barrier = cuda::barrier<cuda::thread_scope_block>;

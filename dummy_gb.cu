@@ -14,7 +14,7 @@ __global__ void add_one_kernel(int* data, size_t offset)
   __shared__ barrier bar;
   if (threadIdx.x == 0) { 
     init(&bar, blockDim.x);                      // a)
-    asm volatile("fence.proxy.async.shared::cta;");
+    asm("fence.proxy.async.shared::cta;");
     // ptx::fence_proxy_async(ptx::space_shared);   // b)
   }
   __syncthreads();
@@ -42,7 +42,7 @@ __global__ void add_one_kernel(int* data, size_t offset)
   }
 
   // 5. Wait for shared memory writes to be visible to TMA engine.
-  asm volatile("fence.proxy.async.shared::cta;");
+  asm("fence.proxy.async.shared::cta;");
   // ptx::fence_proxy_async(ptx::space_shared);   // b)
   __syncthreads();
   // After syncthreads, writes by all threads are visible to TMA engine.
@@ -60,12 +60,12 @@ __global__ void add_one_kernel(int* data, size_t offset)
         data + offset, smem_data, sizeof(smem_data)); */
     // 7. Wait for TMA transfer to have finished reading shared memory.
     // Create a "bulk async-group" out of the previous bulk copy operation.
-    asm volatile("cp.async.bulk.commit_group;");
+    asm("cp.async.bulk.commit_group;");
     // ptx::cp_async_bulk_commit_group();
 
     // Wait for the group to have completed reading from shared memory.
     
-    asm volatile("cp.async.bulk.wait_group.read 0;");
+    asm("cp.async.bulk.wait_group.read 0;");
     // ptx::cp_async_bulk_wait_group_read(ptx::n32_t<0>());
   }
 }
