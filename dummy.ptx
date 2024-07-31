@@ -39,6 +39,12 @@ $L__BB1_2:
         mov.u32         %r9, add_one_kernel(int*, unsigned long)::smem_data;
         mov.u32         %r13, 4096;
         mov.u32         %r11, add_one_kernel(int*, unsigned long)::bar;
+
+		/* EA: Below, parameters
+		      size <- %r13
+			  [mbar] <- [%r11]
+		   But
+		*/
         cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes [%r9], [%rd6], %r13, [%r11];
 
         mbarrier.expect_tx.relaxed.cta.shared::cta.b64 [%r11], %r13;
