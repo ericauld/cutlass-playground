@@ -40,13 +40,42 @@ $L__BB1_2:
         mov.u32         %r13, 4096;
         mov.u32         %r11, add_one_kernel(int*, unsigned long)::bar;
 
-		/* EA: Below, parameters
+        cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes [%r9], [%rd6], %r13, [%r11];
+		/* EA: parameters
 		      size <- %r13
 			  [mbar] <- [%r11]
-		   But
-		*/
-        cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes [%r9], [%rd6], %r13, [%r11];
+		   But...what effect does this have on the mbar? Does it increase
+		   tx-count by `size`? I guess it has no immediate effect, but when the
+		   op is done, it will perform complete-tx? Not to be pedantic, but are
+		   we relying on the next instruction (ie. expect_tx below) being
+		   executed before that happens?
 
+		   In comments for the example from which this ptx is compiled, in Cuda
+		   C++ 7.29.1, it says
+
+		   > cuda::memcpy_async arrives on the barrier and communicates
+           > how many bytes are expected to come in (the transaction count)
+
+		   which makes it sound like it does increase the tx-count. But it could
+		   mean "`cuda::memcpy_async` produces ptx for both `cp.async.bulk` and
+		   `mbarrier.expect_tx`. So maybe the `size` operand of `cp.async.bulk`
+
+		   ptx sec 9.7.8.24.6:
+
+		   > The modifier .mbarrier::complete_tx::bytes specifies that the
+		   > cp.async.bulk variant uses mbarrier based completion mechanism. The
+		   > complete-tx operation, with completeCount argument equal to amount of
+		   > data copied in bytes, will be performed on the mbarrier object
+		   > specified by the operand mbar.
+		   ...
+		   > The copy operation in cp.async.bulk is treated as a weak memory
+		   > operation and the complete-tx operation on the mbarrier has .release
+		   > semantics at the .cluster scope as described in the Memory
+		   > Consistency Model.
+
+		   EA: Assumedly "...will be performed..." once the memory has actually
+		   been moved, yes?
+		*/
         mbarrier.expect_tx.relaxed.cta.shared::cta.b64 [%r11], %r13;
 
 $L__BB1_4:
